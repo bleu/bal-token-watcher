@@ -1,8 +1,11 @@
 defmodule SwapListener.SwapListener do
+  @moduledoc false
   use GenServer
+
   alias SwapListener.NotificationService
-  require Logger
+
   require IEx
+  require Logger
 
   def start_link(_args) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)

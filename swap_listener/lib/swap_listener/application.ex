@@ -1,5 +1,7 @@
 defmodule SwapListener.Application do
+  @moduledoc false
   use Application
+
   alias SwapListener.BlockchainConfig
 
   def start(_type, _args) do

@@ -1,5 +1,8 @@
 defmodule SwapListener.CommandHandler do
-  alias SwapListener.{ChatSubscriptionManager, TelegramClient}
+  @moduledoc false
+  alias SwapListener.ChatSubscriptionManager
+  alias SwapListener.TelegramClient
+
   require Logger
 
   @commands %{
@@ -41,8 +44,7 @@ defmodule SwapListener.CommandHandler do
 
     """,
     "/unsubscribeAll" => "*Unsubscribe from All Token Alerts.*",
-    "/subscriptions" =>
-      "*List Your Current Subscriptions.* Shows all tokens you are tracking and their settings.",
+    "/subscriptions" => "*List Your Current Subscriptions.* Shows all tokens you are tracking and their settings.",
     "/settings" => """
 
     *Update Bot Settings*
@@ -168,7 +170,7 @@ defmodule SwapListener.CommandHandler do
     {state, reply}
   end
 
-  defp handle_slash_command("/help", chat_id, args = ["help" | _], state) do
+  defp handle_slash_command("/help", chat_id, ["help" | _] = args, state) do
     send_command_help(chat_id, "/help " <> Enum.join(args, " "))
     {state, nil}
   end
@@ -181,22 +183,6 @@ defmodule SwapListener.CommandHandler do
   defp handle_slash_command("/help", chat_id, [], state) do
     send_help_message(chat_id)
     {state, nil}
-  end
-
-  defp send_command_help(chat_id, command) do
-    message =
-      case @commands[command] do
-        nil -> "Unknown command. Please type /help for a list of available commands."
-        description -> description
-      end
-
-    TelegramClient.send_message(chat_id, message)
-  end
-
-  defp handle_slash_command("/addToken", chat_id, _args, state) do
-    state = Map.put(state, :step, :token_address)
-    reply = %{chat_id: chat_id, text: "Please enter the token address:"}
-    {state, reply}
   end
 
   defp handle_slash_command("/feedback", chat_id, args, state) do
@@ -223,7 +209,7 @@ defmodule SwapListener.CommandHandler do
     TelegramClient.send_message(chat_id, message)
   end
 
-  defp recursive_help() do
+  defp recursive_help do
     "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
   end
 
@@ -233,7 +219,7 @@ defmodule SwapListener.CommandHandler do
         token_address = command
 
         if valid_token_address?(token_address) do
-          new_state = Map.put(state, :token_address, token_address) |> Map.put(:step, :chain_id)
+          new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :chain_id)
           reply = %{chat_id: chat_id, text: "Please select the chain:"}
           {new_state, reply}
         else
@@ -245,7 +231,8 @@ defmodule SwapListener.CommandHandler do
         chain_id = command
 
         new_state =
-          Map.put(state, :chain_id, chain_id)
+          state
+          |> Map.put(:chain_id, chain_id)
           |> Map.put(:step, :alert_image_url)
 
         reply = %{chat_id: chat_id, text: "Please enter the alert image URL:"}
@@ -255,7 +242,8 @@ defmodule SwapListener.CommandHandler do
         alert_image_url = command
 
         new_state =
-          Map.put(state, :alert_image_url, alert_image_url)
+          state
+          |> Map.put(:alert_image_url, alert_image_url)
           |> Map.put(:step, :website_url)
 
         reply = %{chat_id: chat_id, text: "Please enter the website URL:"}
@@ -265,7 +253,8 @@ defmodule SwapListener.CommandHandler do
         website_url = command
 
         new_state =
-          Map.put(state, :website_url, website_url)
+          state
+          |> Map.put(:website_url, website_url)
           |> Map.put(:step, :twitter_handle)
 
         reply = %{chat_id: chat_id, text: "Please enter the Twitter handle:"}
@@ -275,7 +264,8 @@ defmodule SwapListener.CommandHandler do
         twitter_handle = command
 
         new_state =
-          Map.put(state, :twitter_handle, twitter_handle)
+          state
+          |> Map.put(:twitter_handle, twitter_handle)
           |> Map.put(:step, :discord_link)
 
         reply = %{chat_id: chat_id, text: "Please enter the Discord link:"}
@@ -285,7 +275,8 @@ defmodule SwapListener.CommandHandler do
         discord_link = command
 
         new_state =
-          Map.put(state, :discord_link, discord_link)
+          state
+          |> Map.put(:discord_link, discord_link)
           |> Map.put(:step, :telegram_link)
 
         reply = %{chat_id: chat_id, text: "Please enter the Telegram link:"}
@@ -318,9 +309,8 @@ defmodule SwapListener.CommandHandler do
     TelegramClient.send_message(chat_id, message)
   end
 
-  defp valid_token_address?(_address) do
-    # Add your validation logic here
-    true
+  defp valid_token_address?(address) do
+    is_binary(address) and address != "" and Regex.match?(~r/^0x[a-fA-F0-9]{40}$/, address)
   end
 
   defp list_subscriptions(chat_id) do
@@ -369,7 +359,7 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp finalize_token_addition(chat_id, state) do
-    ChatSubscriptionManager.subscribe(chat_id, state, state.chain_id)
+    ChatSubscriptionManager.subscribe(chat_id, state)
 
     confirmation_message = """
     Token added successfully with the following details:
@@ -397,18 +387,10 @@ defmodule SwapListener.CommandHandler do
     end)
   end
 
-  defp parse_value(value) do
-    case Integer.parse(value) do
-      {int, ""} -> int
-      _ -> value
-    end
-  end
-
   defp format_subscription_list(subscriptions) do
-    Enum.map(subscriptions, fn %{token_address: token_address, chain_id: chain_id} ->
+    Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} ->
       "Token Address: #{token_address}, Chain ID: #{chain_id}"
     end)
-    |> Enum.join("\n")
   end
 
   defp valid_settings_args?(args) do

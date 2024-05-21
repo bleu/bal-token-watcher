@@ -1,5 +1,9 @@
 defmodule SwapListener.NotificationService do
-  alias SwapListener.{ChatSubscriptionManager, TelegramClient, BlockchainConfig}
+  @moduledoc false
+  alias SwapListener.BlockchainConfig
+  alias SwapListener.ChatSubscriptionManager
+  alias SwapListener.TelegramClient
+
   require Logger
 
   def handle_notification(notification) do
@@ -80,9 +84,7 @@ defmodule SwapListener.NotificationService do
           if should_notify?(details, subscription) do
             send_message(subscription, details)
           else
-            Logger.info(
-              "Notification does not match subscription criteria: #{inspect(subscription)}"
-            )
+            Logger.info("Notification does not match subscription criteria: #{inspect(subscription)}")
           end
         end)
 

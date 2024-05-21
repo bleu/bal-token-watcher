@@ -1,8 +1,11 @@
 defmodule SwapListener.TelegramBot do
+  @moduledoc false
   use Telegram.ChatBot
-  require Logger
+
   alias SwapListener.CommandHandler
   alias SwapListener.TelegramClient
+
+  require Logger
 
   @session_ttl 60 * 1_000
 

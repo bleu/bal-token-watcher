@@ -11,8 +11,7 @@ config :swap_listener, SwapListener.Repo,
   password: "postgres",
   hostname: "localhost",
   database: "swap_listener_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool: Ecto.Adapters.SQL.Sandbox
 
 config :honeybadger,
   environment_name: :test
