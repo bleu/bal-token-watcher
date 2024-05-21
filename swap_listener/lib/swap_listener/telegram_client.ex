@@ -1,4 +1,5 @@
 defmodule SwapListener.TelegramClient do
+  @moduledoc false
   require Logger
 
   @doc """

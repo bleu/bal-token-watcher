@@ -1,8 +1,13 @@
 defmodule SwapListener.BalancerPoller do
+  @moduledoc false
   use GenServer
-  require Logger
+
+  alias SwapListener.BalancerSwap
+  alias SwapListener.Pagination
+  alias SwapListener.Repo
+
   require IEx
-  alias SwapListener.{Repo, Pagination, BalancerSwap}
+  require Logger
 
   @poll_interval :timer.seconds(10)
   @batch_size 10

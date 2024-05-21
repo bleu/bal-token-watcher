@@ -1,5 +1,7 @@
 defmodule SwapListener.ChatSubscription do
+  @moduledoc false
   use Ecto.Schema
+
   import Ecto.Changeset
 
   schema "chat_subscriptions" do

@@ -1,6 +1,7 @@
 # test/swap_listener/notification_service_test.exs
 defmodule SwapListener.NotificationServiceTest do
   use SwapListener.DataCase, async: true
+
   alias SwapListener.NotificationService
 
   test "handle_notification processes valid notification" do

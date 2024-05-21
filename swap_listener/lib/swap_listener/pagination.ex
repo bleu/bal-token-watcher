@@ -2,8 +2,9 @@ defmodule SwapListener.Pagination do
   @moduledoc """
   Handles paginated fetching of data from a GraphQL endpoint.
   """
-  require Logger
   alias SwapListener.GraphQLClient
+
+  require Logger
 
   def paginate(endpoint, query, process_fn, initial_id \\ "", step \\ 1000, variables \\ %{}) do
     do_paginate(endpoint, query, process_fn, initial_id, step, variables)

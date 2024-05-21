@@ -1,7 +1,9 @@
 # test/swap_listener/telegram_bot_test.exs
 defmodule SwapListener.TelegramBotTest do
   use ExUnit.Case, async: true
+
   import ExUnit.CaptureLog
+
   alias SwapListener.TelegramBot
 
   test "handle_update processes message update" do

@@ -1,8 +1,9 @@
 # test/swap_listener/command_handler_test.exs
 defmodule SwapListener.CommandHandlerTest do
   use SwapListener.DataCase, async: true
-  alias SwapListener.CommandHandler
+
   alias SwapListener.ChatSubscriptionManager
+  alias SwapListener.CommandHandler
   alias SwapListener.TelegramClient
 
   setup do
