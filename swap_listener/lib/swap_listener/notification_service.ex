@@ -1,7 +1,6 @@
 defmodule SwapListener.NotificationService do
-  alias SwapListener.{ChatSubscriptionManager, BalancerSwap, TelegramClient, BlockchainConfig}
+  alias SwapListener.{ChatSubscriptionManager, TelegramClient, BlockchainConfig}
   require Logger
-  require IEx
 
   def handle_notification(notification) do
     Logger.debug("Handling notification: #{inspect(notification)}")
@@ -45,9 +44,9 @@ defmodule SwapListener.NotificationService do
       token_in_sym: token_in_sym,
       token_out: token_out,
       token_out_sym: token_out_sym,
-      token_amount_in: Decimal.new(to_string(token_amount_in)),
-      token_amount_out: Decimal.new(to_string(token_amount_out)),
-      value_usd: Decimal.new(to_string(value_usd)),
+      token_amount_in: Decimal.new(Kernel.to_string(token_amount_in)),
+      token_amount_out: Decimal.new(Kernel.to_string(token_amount_out)),
+      value_usd: Decimal.new(Kernel.to_string(value_usd)),
       pool_id: pool_id,
       user_address: user_address,
       block: block,
@@ -63,20 +62,23 @@ defmodule SwapListener.NotificationService do
   end
 
   defp broadcast(details) do
-    Logger.info("Broadcasting notification: #{inspect(details)}")
+    Logger.debug("Broadcasting notification: #{inspect(details)}")
 
+    broadcast_to_subscribers(details)
+  end
+
+  defp broadcast_to_subscribers(details) do
     case ChatSubscriptionManager.list_subscriptions() do
       subscriptions when is_list(subscriptions) ->
-        Logger.info("Found subscriptions: #{inspect(subscriptions)}")
+        Logger.debug("Found subscriptions: #{inspect(subscriptions)}")
 
         Enum.each(subscriptions, fn subscription ->
-          Logger.info("Broadcasting to chat_id: #{subscription.chat_id} \
+          Logger.debug("Broadcasting to chat_id: #{subscription.chat_id} \
                         with settings: #{inspect(subscription)} \
                         and details: #{inspect(details)}")
 
           if should_notify?(details, subscription) do
-            message = format_message(details, subscription)
-            TelegramClient.send_message(subscription.chat_id, message)
+            send_message(subscription, details)
           else
             Logger.info(
               "Notification does not match subscription criteria: #{inspect(subscription)}"
@@ -97,28 +99,67 @@ defmodule SwapListener.NotificationService do
       details.token_out == subscription.token_address
   end
 
+  defp send_message(subscription, details) do
+    message = format_message(details, subscription)
+    TelegramClient.send_message(subscription.chat_id, message)
+
+    if subscription.alert_image_url do
+      TelegramClient.send_photo(subscription.chat_id, subscription.alert_image_url, message)
+    else
+      TelegramClient.send_message(subscription.chat_id, message)
+    end
+  end
+
   defp format_message(details, subscription) do
     """
-    #{subscription.alert_image_url}
     *#{details.token_out_sym} PURCHASED!*
 
     Spent: `#{details.token_amount_in} #{details.token_in_sym}`
     Bought: `#{details.token_amount_out} #{details.token_out_sym}`
+    Price: $#{add_thousand_separator(details.value_usd)}
     [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})
-    More Info: #{format_links(subscription)}
+    #{format_links(subscription)}
     """
   end
 
+  # Adds thousand separators to a number string.
+  def add_thousand_separator(number_string) do
+    parts = String.split(number_string, ".", parts: 2)
+    integer_part = Enum.at(parts, 0)
+    decimal_part = Enum.at(parts, 1, "")
+
+    # Reverse the integer part to facilitate the insertion of commas every three digits.
+    reversed_integer_part = String.reverse(integer_part)
+
+    # Insert commas every three digits.
+    formatted_integer_part = Regex.replace(~r/(\d{3})(?=\d)/, reversed_integer_part, "\\1,")
+
+    # Reverse back to the normal order.
+    formatted_integer_part = String.reverse(formatted_integer_part)
+
+    # Reassemble the full number with the decimal part if it exists.
+    case decimal_part do
+      "" -> formatted_integer_part
+      _ -> formatted_integer_part <> "." <> decimal_part
+    end
+  end
+
   defp format_links(subscription) do
-    Enum.map(
-      [:website_url, :twitter_handle, :discord_link, :telegram_link],
-      fn key ->
-        if link = subscription[key], do: "[#{Atom.to_string(key)}](#{link})", else: ""
-      end
-    )
+    [
+      format_link("Website", subscription.website_url),
+      format_link("Twitter", subscription.twitter_handle),
+      format_link("Discord", subscription.discord_link),
+      format_link("Telegram", subscription.telegram_link)
+    ]
     |> Enum.filter(&(&1 != ""))
     |> Enum.join(" | ")
   end
+
+  defp format_link(label, url) when url != nil and url != "" do
+    "[#{label}](#{url})"
+  end
+
+  defp format_link(_label, _url), do: ""
 
   defp get_explorer_link(chain_id, tx_hash) do
     base_url = Map.get(BlockchainConfig.chain_scanner_map(), chain_id, "https://etherscan.io")
@@ -134,5 +175,42 @@ defmodule SwapListener.NotificationService do
       )
 
     "#{base_url}#{pool_id}"
+  end
+
+  # Use to trigger a test notification to a specific chat_id
+  # SwapListener.NotificationService.send_test_notification(chat_id)
+  def send_test_notification(chat_id) do
+    notification = %{
+      block: 123_456,
+      caller: "0x1234567890abcdef",
+      chain_id: 1,
+      id: "0xabcdef1234567890",
+      inserted_at: nil,
+      pool_id: "0xpoolid123456",
+      timestamp: DateTime.to_unix(DateTime.utc_now()),
+      token_amount_in: "100.0",
+      token_amount_out: "50.0",
+      token_in: "0xtokenin123456",
+      token_in_sym: "ETH",
+      token_out: "0xtokenout123456",
+      token_out_sym: "DAI",
+      tx: "0xtx1234567890abcdef",
+      updated_at: nil,
+      user_address: "0xuseraddress123456",
+      value_usd: "5000.0"
+    }
+
+    test_subscription = %{
+      chat_id: chat_id,
+      token_address: notification.token_out,
+      chain_id: notification.chain_id,
+      alert_image_url: "https://picsum.photos/536/354",
+      website_url: nil,
+      twitter_handle: nil,
+      discord_link: nil,
+      telegram_link: nil
+    }
+
+    send_message(test_subscription, notification)
   end
 end

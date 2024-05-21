@@ -13,9 +13,24 @@ defmodule SwapListener.TelegramClient do
       text: text,
       parse_mode: "Markdown"
     )
-
-    # log any errors that occur
   rescue
     error -> Logger.error("Failed to send message: #{inspect(error)}")
+  end
+
+  @doc """
+  Sends a photo to a specific chat_id with an optional caption.
+  """
+  def send_photo(chat_id, photo_url, caption \\ "") do
+    token = Application.get_env(:swap_listener, :telegram_token)
+    Logger.debug("Sending photo to #{chat_id}: #{photo_url} with caption: #{caption}")
+
+    Telegram.Api.request(token, "sendPhoto",
+      chat_id: chat_id,
+      photo: photo_url,
+      caption: caption,
+      parse_mode: "Markdown"
+    )
+  rescue
+    error -> Logger.error("Failed to send photo: #{inspect(error)}")
   end
 end

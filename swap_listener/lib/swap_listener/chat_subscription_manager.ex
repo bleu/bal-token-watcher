@@ -4,6 +4,7 @@ defmodule SwapListener.ChatSubscriptionManager do
   alias SwapListener.Repo
   alias SwapListener.ChatSubscription
   import Ecto.Query, only: [from: 2]
+  require IEx
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
@@ -58,7 +59,9 @@ defmodule SwapListener.ChatSubscriptionManager do
     Repo.all(query)
   end
 
-  def subscribe(chat_id, token_address, chain_id) do
+  def subscribe(chat_id, state) do
+    token_address = state.token_address
+    chain_id = state.chain_id
     # Check if subscription already exists
     query =
       from(c in ChatSubscription,
@@ -73,14 +76,14 @@ defmodule SwapListener.ChatSubscriptionManager do
             chat_id: chat_id,
             token_address: token_address,
             chain_id: chain_id,
-            trade_size_step: 0.1,
-            trade_size_emoji: "❤️",
-            min_buy_amount: 0.1,
-            alert_image_url: "default_alert_image_url",
-            website_url: "default_website_url",
-            twitter_handle: "default_twitter",
-            discord_link: "default_discord",
-            telegram_link: "default_telegram"
+            trade_size_step: state[:trade_size_step] || 0.1,
+            trade_size_emoji: state[:trade_size_emoji] || "💰",
+            min_buy_amount: state[:min_buy_amount] || 0.1,
+            alert_image_url: state[:alert_image_url] || nil,
+            website_url: state[:website_url] || nil,
+            twitter_handle: state[:twitter_handle] || nil,
+            discord_link: state[:discord_link] || nil,
+            telegram_link: state[:telegram_link] || nil
           })
 
         case Repo.insert(changeset) do
@@ -92,8 +95,8 @@ defmodule SwapListener.ChatSubscriptionManager do
             )
 
           {:error, changeset} ->
-            Logger.debug("Failed to insert subscription for chat_id: #{chat_id}")
-            Logger.debug("Changeset errors: #{inspect(changeset.errors)}")
+            Logger.info("Failed to insert subscription for chat_id: #{chat_id}")
+            Logger.info("Changeset errors: #{inspect(changeset.errors)}")
 
             handle_db_response(
               {:error, changeset},

@@ -183,6 +183,16 @@ defmodule SwapListener.CommandHandler do
     {state, nil}
   end
 
+  defp send_command_help(chat_id, command) do
+    message =
+      case @commands[command] do
+        nil -> "Unknown command. Please type /help for a list of available commands."
+        description -> description
+      end
+
+    TelegramClient.send_message(chat_id, message)
+  end
+
   defp handle_slash_command("/addToken", chat_id, _args, state) do
     state = Map.put(state, :step, :token_address)
     reply = %{chat_id: chat_id, text: "Please enter the token address:"}
@@ -385,7 +395,13 @@ defmodule SwapListener.CommandHandler do
 
       {String.to_atom(key), value}
     end)
-    |> Enum.into(%{})
+  end
+
+  defp parse_value(value) do
+    case Integer.parse(value) do
+      {int, ""} -> int
+      _ -> value
+    end
   end
 
   defp format_subscription_list(subscriptions) do

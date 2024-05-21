@@ -3,7 +3,6 @@ defmodule SwapListener.Application do
   alias SwapListener.BlockchainConfig
 
   def start(_type, _args) do
-    # get only first element of the tuple
     poller_children =
       Enum.map(
         BlockchainConfig.subgraph_urls(),
@@ -24,11 +23,18 @@ defmodule SwapListener.Application do
         {Telegram.Poller, bots: [telegram_bot_config()]}
       ] ++ poller_children
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: SwapListener.Supervisor)
+    opts = [
+      strategy: :one_for_one,
+      name: SwapListener.Supervisor,
+      max_restarts: 10,
+      max_seconds: 60
+    ]
+
+    Supervisor.start_link(children, opts)
   end
 
   defp telegram_bot_config do
     token = Application.fetch_env!(:swap_listener, :telegram_token)
-    {SwapListener.TelegramBot, token: token, max_bot_concurrency: 1}
+    {SwapListener.TelegramBot, token: token, max_bot_concurrency: 10}
   end
 end

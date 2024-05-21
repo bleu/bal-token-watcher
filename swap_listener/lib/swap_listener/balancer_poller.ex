@@ -5,7 +5,7 @@ defmodule SwapListener.BalancerPoller do
   alias SwapListener.{Repo, Pagination, BalancerSwap}
 
   @poll_interval :timer.seconds(10)
-  @batch_size 1000
+  @batch_size 10
 
   def start_link({network, url, chain_id}) do
     GenServer.start_link(__MODULE__, %{network: network, url: url, chain_id: chain_id},

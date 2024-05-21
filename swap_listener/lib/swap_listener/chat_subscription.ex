@@ -40,12 +40,7 @@ defmodule SwapListener.ChatSubscription do
       :chain_id,
       :min_buy_amount,
       :trade_size_emoji,
-      :trade_size_step,
-      :alert_image_url,
-      :website_url,
-      :twitter_handle,
-      :discord_link,
-      :telegram_link
+      :trade_size_step
     ])
   end
 end
