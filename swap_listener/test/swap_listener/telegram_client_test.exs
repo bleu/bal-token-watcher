@@ -1,7 +1,9 @@
 # test/swap_listener/telegram_client_test.exs
 defmodule SwapListener.TelegramClientTest do
   use ExUnit.Case, async: true
+
   import ExUnit.CaptureLog
+
   alias SwapListener.TelegramClient
 
   test "send_message logs the message" do

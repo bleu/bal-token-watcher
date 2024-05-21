@@ -1,9 +1,10 @@
 # test/swap_listener/chat_subscription_manager_test.exs
 defmodule SwapListener.ChatSubscriptionManagerTest do
   use SwapListener.DataCase, async: true
+
+  alias SwapListener.ChatSubscription
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.Repo
-  alias SwapListener.ChatSubscription
 
   setup do
     {:ok, _} = start_supervised(SwapListener.ChatSubscriptionManager)

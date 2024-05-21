@@ -1,10 +1,14 @@
 defmodule SwapListener.ChatSubscriptionManager do
+  @moduledoc false
   use GenServer
-  require Logger
-  alias SwapListener.Repo
-  alias SwapListener.ChatSubscription
+
   import Ecto.Query, only: [from: 2]
+
+  alias SwapListener.ChatSubscription
+  alias SwapListener.Repo
+
   require IEx
+  require Logger
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
@@ -37,7 +41,7 @@ defmodule SwapListener.ChatSubscriptionManager do
     Repo.all(query)
   end
 
-  def list_subscriptions() do
+  def list_subscriptions do
     query =
       from(c in ChatSubscription,
         select: %{
@@ -65,8 +69,7 @@ defmodule SwapListener.ChatSubscriptionManager do
     # Check if subscription already exists
     query =
       from(c in ChatSubscription,
-        where:
-          c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id
+        where: c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id
       )
 
     case Repo.one(query) do
@@ -117,8 +120,7 @@ defmodule SwapListener.ChatSubscriptionManager do
   def unsubscribe(chat_id, token_address, chain_id) do
     query =
       from(c in ChatSubscription,
-        where:
-          c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id
+        where: c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id
       )
 
     case Repo.delete_all(query) do

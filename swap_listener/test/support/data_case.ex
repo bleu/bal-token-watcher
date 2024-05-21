@@ -18,12 +18,12 @@ defmodule SwapListener.DataCase do
 
   using do
     quote do
-      alias SwapListener.Repo
-
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
       import SwapListener.DataCase
+
+      alias SwapListener.Repo
     end
   end
 
