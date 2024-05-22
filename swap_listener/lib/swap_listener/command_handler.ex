@@ -147,17 +147,9 @@ defmodule SwapListener.CommandHandler do
 
       {state, nil}
     else
+      # this should also have the subscription args
       update_settings(chat_id, args)
 
-      {state, nil}
-    end
-
-    if valid_settings_args?(args) do
-      update_settings(chat_id, args)
-      {state, nil}
-    else
-      message = "Invalid settings provided. Please check your configuration."
-      TelegramClient.send_message(chat_id, message)
       {state, nil}
     end
   end
@@ -328,9 +320,40 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp update_settings(chat_id, args) do
-    settings = parse_settings(args)
-    ChatSubscriptionManager.update_settings(chat_id, settings)
-    TelegramClient.send_message(chat_id, "Settings updated successfully.")
+    case parse_settings(args) do
+      {:ok, settings} ->
+        ChatSubscriptionManager.update_settings(chat_id, settings)
+        TelegramClient.send_message(chat_id, "Settings updated successfully. New settings: #{inspect(settings)}")
+
+      {:error, reason} ->
+        TelegramClient.send_message(chat_id, "Failed to update settings: #{reason}")
+    end
+  end
+
+  defp parse_settings(args) do
+    settings =
+      Enum.map(args, fn arg ->
+        case String.split(arg, ":") do
+          [key, value] -> {:ok, {String.to_atom(key), value}}
+          _ -> {:error, "Invalid format for #{arg}"}
+        end
+      end)
+
+    if Enum.any?(settings, &match?({:error, _}, &1)) do
+      {:error, Enum.filter(settings, &match?({:error, _}, &1))}
+    else
+      {:ok, Enum.map(settings, fn {:ok, setting} -> setting end)}
+    end
+  end
+
+  defp valid_settings_args?(args) do
+    required_keys = ["min_buy_amount", "trade_size_step", "alert_image_url"]
+
+    Enum.all?(required_keys, fn key ->
+      Enum.any?(args, fn arg ->
+        String.starts_with?(arg, key <> ":")
+      end)
+    end)
   end
 
   defp send_help_message(chat_id) do
@@ -379,28 +402,9 @@ defmodule SwapListener.CommandHandler do
     link != nil and link != ""
   end
 
-  defp parse_settings(args) do
-    Enum.map(args, fn arg ->
-      [key, value] = String.split(arg, ":")
-
-      {String.to_atom(key), value}
-    end)
-  end
-
   defp format_subscription_list(subscriptions) do
     Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} ->
       "Token Address: #{token_address}, Chain ID: #{chain_id}"
-    end)
-  end
-
-  defp valid_settings_args?(args) do
-    # Example validation: Ensure that certain required keys are present
-    required_keys = ["min_buy_amount", "trade_size_step", "alert_image"]
-
-    Enum.all?(required_keys, fn key ->
-      Enum.any?(args, fn arg ->
-        String.starts_with?(arg, key <> ":")
-      end)
     end)
   end
 end

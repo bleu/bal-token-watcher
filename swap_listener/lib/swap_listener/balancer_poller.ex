@@ -5,10 +5,11 @@ defmodule SwapListener.BalancerPoller do
   import Ecto.Query, only: [from: 2]
 
   alias SwapListener.BalancerSwap
+  alias SwapListener.DexscreenerCache
+  alias SwapListener.DexscreenerClient
   alias SwapListener.Pagination
   alias SwapListener.Repo
 
-  require IEx
   require Logger
 
   @poll_interval :timer.seconds(1)
@@ -44,13 +45,14 @@ defmodule SwapListener.BalancerPoller do
       )
 
     case Repo.one(query) do
+      # Return 0 if no swaps are found for this chain
       nil -> nil
       timestamp -> DateTime.to_unix(timestamp)
     end
   end
 
   defp poll_balancer_subgraph(url, chain_id) do
-    latest_timestamp = get_latest_timestamp(chain_id) || DateTime.to_unix(DateTime.utc_now())
+    latest_timestamp = get_latest_timestamp(chain_id) || DateTime.to_unix(DateTime.utc_now()) - 60
 
     query = """
     query ($latestTimestamp: Int!) {
@@ -78,7 +80,6 @@ defmodule SwapListener.BalancerPoller do
     """
 
     variables = %{"latestTimestamp" => latest_timestamp}
-    Logger.debug("Polling Balancer subgraph with variables: #{inspect(variables)}")
     Pagination.paginate(url, query, &process_swaps(&1, chain_id), "", @batch_size, variables)
   end
 
@@ -96,6 +97,8 @@ defmodule SwapListener.BalancerPoller do
   defp store_swap(swap, chain_id) do
     case Repo.get_by(BalancerSwap, id: swap["id"]) do
       nil ->
+        dexscreener_url = get_or_fetch_dexscreener_url(swap["id"], chain_id)
+
         changeset =
           BalancerSwap.changeset(%BalancerSwap{}, %{
             id: swap["id"],
@@ -112,7 +115,8 @@ defmodule SwapListener.BalancerPoller do
             timestamp: DateTime.from_unix!(swap["timestamp"]),
             block: swap["block"],
             tx: swap["tx"],
-            chain_id: chain_id
+            chain_id: chain_id,
+            dexscreener_url: dexscreener_url
           })
 
         case Repo.insert(changeset) do
@@ -125,6 +129,32 @@ defmodule SwapListener.BalancerPoller do
 
       _swap ->
         Logger.debug("Swap #{swap["id"]} already exists, skipping insertion")
+    end
+  end
+
+  defp get_or_fetch_dexscreener_url(pair_id, chain_id) do
+    case Repo.get_by(DexscreenerCache, id: pair_id) do
+      nil ->
+        case DexscreenerClient.get_pair_url(chain_id, pair_id) do
+          {:ok, url} ->
+            changeset =
+              DexscreenerCache.changeset(%DexscreenerCache{}, %{
+                id: pair_id,
+                dexscreener_url: url,
+                chain_id: chain_id
+              })
+
+            case Repo.insert(changeset) do
+              {:ok, _cache} -> url
+              {:error, _changeset} -> url
+            end
+
+          {:error, _reason} ->
+            nil
+        end
+
+      %DexscreenerCache{dexscreener_url: url} ->
+        url
     end
   end
 end

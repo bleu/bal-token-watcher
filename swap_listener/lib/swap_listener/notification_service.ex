@@ -98,7 +98,7 @@ defmodule SwapListener.NotificationService do
 
   defp should_notify?(details, subscription) do
     details.chain_id == subscription.chain_id &&
-      details.token_out == subscription.token_address
+      details.token_out == subscription.token_address && details.token_amount_out >= subscription.min_buy_amount
   end
 
   defp send_message(subscription, details) do
@@ -158,6 +158,7 @@ defmodule SwapListener.NotificationService do
 
   defp format_links(subscription) do
     [
+      format_link("DEX Screener", subscription.dex_screener_link),
       format_link("Website", subscription.website_url),
       format_link("Twitter", subscription.twitter_handle),
       format_link("Discord", subscription.discord_link),
