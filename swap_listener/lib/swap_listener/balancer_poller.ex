@@ -67,43 +67,39 @@ defmodule SwapListener.BalancerPoller do
   end
 
   defp store_swap(swap, chain_id) do
+    changeset =
+      BalancerSwap.changeset(%BalancerSwap{}, %{
+        id: swap["id"],
+        caller: swap["caller"],
+        token_in: swap["tokenIn"],
+        token_in_sym: swap["tokenInSym"],
+        token_out: swap["tokenOut"],
+        token_out_sym: swap["tokenOutSym"],
+        token_amount_in: Decimal.new(swap["tokenAmountIn"]),
+        token_amount_out: Decimal.new(swap["tokenAmountOut"]),
+        value_usd: Decimal.new(swap["valueUSD"]),
+        pool_id: swap["poolId"]["id"],
+        user_address: swap["userAddress"]["id"],
+        timestamp: DateTime.from_unix!(swap["timestamp"]),
+        block: swap["block"],
+        tx: swap["tx"],
+        chain_id: chain_id,
+        dexscreener_url: get_or_fetch_dexscreener_url(swap["id"], chain_id)
+      })
+
     Repo.transaction(fn ->
-      case Repo.get_by(BalancerSwap, id: swap["id"]) do
-        nil ->
-          changeset = create_changeset(swap, chain_id)
+      case Repo.insert(changeset) do
+        {:ok, _swap} ->
+          Logger.debug("Successfully inserted swap #{swap["id"]}")
 
-          case Repo.insert(changeset) do
-            {:ok, _swap} -> Logger.debug("Successfully inserted swap #{swap["id"]}")
-            {:error, changeset} -> Logger.error("Failed to insert swap #{swap["id"]}: #{inspect(changeset.errors)}")
+        {:error, changeset} ->
+          if changeset.valid? do
+            Logger.error("Failed to insert swap #{swap["id"]}: #{inspect(changeset.errors)}")
+          else
+            Logger.debug("Swap #{swap["id"]} already exists, skipping insertion")
           end
-
-        _ ->
-          Logger.debug("Swap #{swap["id"]} already exists, skipping insertion")
       end
     end)
-  end
-
-  defp create_changeset(swap, chain_id) do
-    dexscreener_url = get_or_fetch_dexscreener_url(swap["id"], chain_id)
-
-    BalancerSwap.changeset(%BalancerSwap{}, %{
-      id: swap["id"],
-      caller: swap["caller"],
-      token_in: swap["tokenIn"],
-      token_in_sym: swap["tokenInSym"],
-      token_out: swap["tokenOut"],
-      token_out_sym: swap["tokenOutSym"],
-      token_amount_in: Decimal.new(swap["tokenAmountIn"]),
-      token_amount_out: Decimal.new(swap["tokenAmountOut"]),
-      value_usd: Decimal.new(swap["valueUSD"]),
-      pool_id: swap["poolId"]["id"],
-      user_address: swap["userAddress"]["id"],
-      timestamp: DateTime.from_unix!(swap["timestamp"]),
-      block: swap["block"],
-      tx: swap["tx"],
-      chain_id: chain_id,
-      dexscreener_url: dexscreener_url
-    })
   end
 
   defp get_or_fetch_dexscreener_url(pair_id, chain_id) do

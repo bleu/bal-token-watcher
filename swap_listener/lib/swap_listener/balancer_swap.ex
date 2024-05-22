@@ -68,5 +68,6 @@ defmodule SwapListener.BalancerSwap do
       :tx,
       :chain_id
     ])
+    |> unique_constraint(:id, name: :balancer_swaps_pkey)
   end
 end

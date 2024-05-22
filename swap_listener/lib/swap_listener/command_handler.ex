@@ -404,17 +404,32 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp format_subscription_list(subscriptions) do
+    header = "| Chain                  | Token Address       | Status |\n"
+    separator = "|------------------------|---------------------|--------|\n"
+    rows = Enum.map_join(subscriptions, "\n", fn subscription -> format_subscription(subscription) end)
+
     """
-    ```
-    | Chain             | Token Address              |
-    |-------------------|----------------------------|
-    #{Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} -> "| #{BlockchainConfig.get_chain_label(chain_id)} | #{truncate_address(token_address)} |" end)}
-    ```
+    #{header}#{separator}#{rows}
     """
+  end
+
+  defp format_subscription(%{token_address: token_address, chain_id: chain_id, paused: paused}) do
+    status = if paused, do: "Paused", else: "Active"
+
+    "| #{pad_right(BlockchainConfig.get_chain_label(chain_id), 22)} | #{pad_right(truncate_address(token_address), 19)} | #{pad_right(status, 6)} |"
+  end
+
+  defp pad_right(string, length) do
+    string <> String.duplicate(" ", length - String.length(string))
   end
 
   defp truncate_address(address) do
     String.slice(address, 0..5) <> "..." <> String.slice(address, -4..-1)
+  end
+
+  defp get_token_name(token_address) do
+    Repo.one(from(s in BalancerSwap, where: s.token_in == ^token_address, select: s.token_in_name)) ||
+      Repo.one(from(s in BalancerSwap, where: s.token_out == ^token_address, select: s.token_out_name)) || ""
   end
 
   defp get_token_name(token_address) do
