@@ -38,11 +38,7 @@ defmodule SwapListener.BalancerPoller do
   end
 
   defp get_latest_timestamp(chain_id) do
-    query =
-      from(c in BalancerSwap,
-        where: c.chain_id == ^chain_id,
-        select: max(c.timestamp)
-      )
+    query = from(c in BalancerSwap, where: c.chain_id == ^chain_id, select: max(c.timestamp))
 
     case Repo.one(query) do
       nil -> nil
@@ -56,24 +52,7 @@ defmodule SwapListener.BalancerPoller do
     query = """
     query ($latestTimestamp: Int!) {
       swaps(first: #{@batch_size}, orderBy: timestamp, orderDirection: desc, where: {timestamp_gt: $latestTimestamp}) {
-        id
-        caller
-        tokenIn
-        tokenInSym
-        tokenOut
-        tokenOutSym
-        tokenAmountIn
-        tokenAmountOut
-        valueUSD
-        poolId {
-          id
-        }
-        userAddress {
-          id
-        }
-        timestamp
-        block
-        tx
+        id caller tokenIn tokenInSym tokenOut tokenOutSym tokenAmountIn tokenAmountOut valueUSD poolId { id } userAddress { id } timestamp block tx
       }
     }
     """
@@ -84,72 +63,60 @@ defmodule SwapListener.BalancerPoller do
 
   defp process_swaps(data, chain_id) do
     swaps = Map.get(data, "swaps", [])
-
-    if swaps != [] do
-      Enum.each(swaps, &store_swap(&1, chain_id))
-      :ok
-    else
-      :done
-    end
+    Enum.each(swaps, &store_swap(&1, chain_id))
   end
 
   defp store_swap(swap, chain_id) do
-    case Repo.get_by(BalancerSwap, id: swap["id"]) do
-      nil ->
-        dexscreener_url = get_or_fetch_dexscreener_url(swap["id"], chain_id)
+    Repo.transaction(fn ->
+      case Repo.get_by(BalancerSwap, id: swap["id"]) do
+        nil ->
+          changeset = create_changeset(swap, chain_id)
 
-        changeset =
-          BalancerSwap.changeset(%BalancerSwap{}, %{
-            id: swap["id"],
-            caller: swap["caller"],
-            token_in: swap["tokenIn"],
-            token_in_sym: swap["tokenInSym"],
-            token_out: swap["tokenOut"],
-            token_out_sym: swap["tokenOutSym"],
-            token_amount_in: Decimal.new(swap["tokenAmountIn"]),
-            token_amount_out: Decimal.new(swap["tokenAmountOut"]),
-            value_usd: Decimal.new(swap["valueUSD"]),
-            pool_id: swap["poolId"]["id"],
-            user_address: swap["userAddress"]["id"],
-            timestamp: DateTime.from_unix!(swap["timestamp"]),
-            block: swap["block"],
-            tx: swap["tx"],
-            chain_id: chain_id,
-            dexscreener_url: dexscreener_url
-          })
+          case Repo.insert(changeset) do
+            {:ok, _swap} -> Logger.debug("Successfully inserted swap #{swap["id"]}")
+            {:error, changeset} -> Logger.error("Failed to insert swap #{swap["id"]}: #{inspect(changeset.errors)}")
+          end
 
-        case Repo.insert(changeset) do
-          {:ok, _swap} ->
-            Logger.debug("Successfully inserted swap #{swap["id"]}")
+        _ ->
+          Logger.debug("Swap #{swap["id"]} already exists, skipping insertion")
+      end
+    end)
+  end
 
-          {:error, changeset} ->
-            Logger.error("Failed to insert swap #{swap["id"]}: #{inspect(changeset.errors)}")
-        end
+  defp create_changeset(swap, chain_id) do
+    dexscreener_url = get_or_fetch_dexscreener_url(swap["id"], chain_id)
 
-      _swap ->
-        Logger.debug("Swap #{swap["id"]} already exists, skipping insertion")
-    end
+    BalancerSwap.changeset(%BalancerSwap{}, %{
+      id: swap["id"],
+      caller: swap["caller"],
+      token_in: swap["tokenIn"],
+      token_in_sym: swap["tokenInSym"],
+      token_out: swap["tokenOut"],
+      token_out_sym: swap["tokenOutSym"],
+      token_amount_in: Decimal.new(swap["tokenAmountIn"]),
+      token_amount_out: Decimal.new(swap["tokenAmountOut"]),
+      value_usd: Decimal.new(swap["valueUSD"]),
+      pool_id: swap["poolId"]["id"],
+      user_address: swap["userAddress"]["id"],
+      timestamp: DateTime.from_unix!(swap["timestamp"]),
+      block: swap["block"],
+      tx: swap["tx"],
+      chain_id: chain_id,
+      dexscreener_url: dexscreener_url
+    })
   end
 
   defp get_or_fetch_dexscreener_url(pair_id, chain_id) do
     case Repo.get_by(DexscreenerCache, id: pair_id) do
       nil ->
-        case DexscreenerClient.get_pair_url(chain_id, pair_id) do
-          {:ok, url} ->
-            changeset =
-              DexscreenerCache.changeset(%DexscreenerCache{}, %{
-                id: pair_id,
-                dexscreener_url: url,
-                chain_id: chain_id
-              })
-
-            case Repo.insert(changeset) do
-              {:ok, _cache} -> url
-              {:error, _changeset} -> url
-            end
-
-          {:error, _reason} ->
-            nil
+        with {:ok, url} <- DexscreenerClient.get_pair_url(chain_id, pair_id),
+             {:ok, _} <-
+               Repo.insert(
+                 DexscreenerCache.changeset(%DexscreenerCache{}, %{id: pair_id, dexscreener_url: url, chain_id: chain_id})
+               ) do
+          url
+        else
+          _ -> nil
         end
 
       %DexscreenerCache{dexscreener_url: url} ->
