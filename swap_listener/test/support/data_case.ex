@@ -28,16 +28,11 @@ defmodule SwapListener.DataCase do
   end
 
   setup tags do
-    setup_sandbox(tags)
-
-    :ok
-  end
-
-  def setup_sandbox(_tags) do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwapListener.Repo)
 
-    # Ensuring that all changes are reverted at the end of the test
-    Ecto.Adapters.SQL.Sandbox.mode(SwapListener.Repo, {:shared, self()})
+    unless tags[:async] do
+      Ecto.Adapters.SQL.Sandbox.mode(SwapListener.Repo, {:shared, self()})
+    end
 
     :ok
   end

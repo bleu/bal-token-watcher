@@ -1,77 +1,60 @@
 defmodule SwapListener.CommandHandler do
   @moduledoc false
   alias SwapListener.ChatSubscriptionManager
-  alias SwapListener.TelegramClient
 
   require Logger
+
+  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
 
   @commands %{
     "/start" => "*Welcome to the Balancer Buy Bot.* Type `/help` for more information.",
     "/subscribe" => """
-
     *Subscribe to Buy Alerts*
-
     `/subscribe [token_address] [chain_id]` - Subscribe to buy alerts for a specific token on a specified chain.
-
-
-
     *Example:* `/subscribe 0xTokenAddress 1`
-
-
-
     *Available Chains:*
-
     - Ethereum (1)
-
     - Polygon (137)
-
     - Arbitrum (42161)
-
     - Optimism (10)
-
     - Gnosis Chain (100)
-
     """,
     "/unsubscribe" => """
-
     *Unsubscribe from Buy Alerts*
-
     `/unsubscribe [token_address] [chain_id]` - Unsubscribe from alerts for a specific token on a specified chain.
-
-
-
     *Example:* `/unsubscribe 0xTokenAddress 1`
-
     """,
     "/unsubscribeAll" => "*Unsubscribe from All Token Alerts.*",
     "/subscriptions" => "*List Your Current Subscriptions.* Shows all tokens you are tracking and their settings.",
     "/settings" => """
-
     *Update Bot Settings*
-
-    `/settings [option:value]` - Update your bot settings for notifications.
-
-
-
+    `/settings [token_address] [chain_id] [option:value]` - Update your bot settings for a specific subscription.
     *Options Include:*
-
     `min_buy_amount`, `trade_size_emoji`, `trade_size_step`, `alert_image_url`, `website_url`, `twitter_handle`, `discord_link`, `telegram_link`
-
-
-
-    *Example:* `/settings min_buy_amount:100`
-
+    *Example:* `/settings 0xTokenAddress 1 min_buy_amount:100`
     """,
+    "/pause" => """
+    *Pause Alerts for a Specific Token*
+    `/pause [token_address] [chain_id]` - Pause alerts for a specific token on a specified chain.
+    *Example:* `/pause 0xTokenAddress 1`
+    """,
+    "/pauseAll" => "*Pause All Token Alerts.*",
     "/addToken" => """
-
     *Add a New Token for Buy Alerts*
-
-    `/addToken` - Begin the process to add a new token. You will be prompted to enter the token address, select a chain, and configure settings.
-
+    `/addToken` - Begin the process to add a new token. You will be prompted to enter the chain ID, token address, and configure settings.
     """,
     "/help" =>
       "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
   }
+
+  @available_chains """
+  *Available Chains:*
+  - Ethereum (1)
+  - Polygon (137)
+  - Arbitrum (42161)
+  - Optimism (10)
+  - Gnosis Chain (100)
+  """
 
   def handle_command(command, chat_id, args, state) do
     Logger.debug("Received command: #{command} with args: #{inspect(args)}")
@@ -85,6 +68,36 @@ defmodule SwapListener.CommandHandler do
 
       true ->
         {state, nil}
+    end
+  end
+
+  defp handle_slash_command("/pause", chat_id, [token_address, chain_id], state) do
+    parsed_chain_id = String.to_integer(chain_id)
+    ChatSubscriptionManager.pause(chat_id, token_address, parsed_chain_id)
+    {state, nil}
+  end
+
+  defp handle_slash_command("/pause", chat_id, _args, state) do
+    @telegram_client.send_message(chat_id, "Please provide a token address and chain ID to pause.")
+    {state, nil}
+  end
+
+  defp handle_slash_command("/pauseAll", chat_id, _args, state) do
+    ChatSubscriptionManager.pause_all(chat_id)
+    {state, nil}
+  end
+
+  defp handle_slash_command("/settings", chat_id, [token_address, chain_id | rest], state) do
+    if Enum.empty?(rest) do
+      message =
+        "No settings provided. Use the format /settings token_address chain_id option:value to update settings. For example, /settings 0xTokenAddress 1 min_buy_amount:100."
+
+      @telegram_client.send_message(chat_id, message)
+      {state, nil}
+    else
+      parsed_chain_id = String.to_integer(chain_id)
+      update_subscription_settings(chat_id, token_address, parsed_chain_id, rest)
+      {state, nil}
     end
   end
 
@@ -105,7 +118,7 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp handle_slash_command("/subscribe", chat_id, _args, state) do
-    TelegramClient.send_message(
+    @telegram_client.send_message(
       chat_id,
       "Please provide a token address and chain ID to subscribe."
     )
@@ -120,7 +133,7 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp handle_slash_command("/unsubscribe", chat_id, _args, state) do
-    TelegramClient.send_message(
+    @telegram_client.send_message(
       chat_id,
       "Please provide a token address and chain ID to unsubscribe."
     )
@@ -138,26 +151,10 @@ defmodule SwapListener.CommandHandler do
     {state, nil}
   end
 
-  defp handle_slash_command("/settings", chat_id, args, state) do
-    if Enum.empty?(args) do
-      message =
-        "No settings provided. Use the format /settings option:value to update settings. For example, /settings min_buy_amount:100."
-
-      TelegramClient.send_message(chat_id, message)
-
-      {state, nil}
-    else
-      # this should also have the subscription args
-      update_settings(chat_id, args)
-
-      {state, nil}
-    end
-  end
-
   defp handle_slash_command("/addToken", chat_id, _args, state) do
-    state = Map.put(state, :step, :token_address)
+    state = Map.put(state, :step, :chain_id)
 
-    reply = %{chat_id: chat_id, text: "Please enter the token address:"}
+    reply = %{chat_id: chat_id, text: "Please select the chain:#{@available_chains}"}
 
     {state, reply}
   end
@@ -180,13 +177,28 @@ defmodule SwapListener.CommandHandler do
   defp handle_slash_command("/feedback", chat_id, args, state) do
     feedback_message = Enum.join(args, " ")
     Logger.info("Received feedback from #{chat_id}: #{feedback_message}")
-    TelegramClient.send_message(chat_id, "Thank you for your feedback!")
+    @telegram_client.send_message(chat_id, "Thank you for your feedback!")
     {state, nil}
   end
 
   defp handle_slash_command(_command, chat_id, _args, state) do
     unknown_command(chat_id)
     {state, nil}
+  end
+
+  defp update_subscription_settings(chat_id, token_address, chain_id, args) do
+    case parse_settings(args) do
+      {:ok, settings} ->
+        ChatSubscriptionManager.update_subscription_settings(chat_id, token_address, chain_id, settings)
+
+        @telegram_client.send_message(
+          chat_id,
+          "Settings updated successfully for #{token_address} on chain #{chain_id}. New settings: #{inspect(settings)}"
+        )
+
+      {:error, reason} ->
+        @telegram_client.send_message(chat_id, "Failed to update settings: #{reason}")
+    end
   end
 
   defp send_command_help(chat_id, command) do
@@ -198,7 +210,7 @@ defmodule SwapListener.CommandHandler do
           "Unknown command. Please type /help for a list of available commands."
       end
 
-    TelegramClient.send_message(chat_id, message)
+    @telegram_client.send_message(chat_id, message)
   end
 
   defp recursive_help do
@@ -206,29 +218,33 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp handle_step_command(command, chat_id, _, state) do
-    case state.step do
-      :token_address ->
-        token_address = command
-
-        if valid_token_address?(token_address) do
-          new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :chain_id)
-          reply = %{chat_id: chat_id, text: "Please select the chain:"}
-          {new_state, reply}
-        else
-          reply = %{chat_id: chat_id, text: "Invalid token address. Please try again."}
-          {state, reply}
-        end
-
+    case state[:step] do
       :chain_id ->
         chain_id = command
 
         new_state =
           state
           |> Map.put(:chain_id, chain_id)
-          |> Map.put(:step, :alert_image_url)
+          |> Map.put(:step, :token_address)
 
-        reply = %{chat_id: chat_id, text: "Please enter the alert image URL:"}
+        reply = %{chat_id: chat_id, text: "Please enter the token address:"}
         {new_state, reply}
+
+      :token_address ->
+        token_address = command
+
+        if valid_token_address?(token_address) do
+          new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :alert_image_url)
+
+          token_name = get_token_name(token_address)
+          confirmation_message = "You have selected the token: #{token_name} (#{token_address})."
+
+          reply = %{chat_id: chat_id, text: "#{confirmation_message}\nPlease enter the alert image URL:"}
+          {new_state, reply}
+        else
+          reply = %{chat_id: chat_id, text: "Invalid token address. Please try again."}
+          {state, reply}
+        end
 
       :alert_image_url ->
         alert_image_url = command
@@ -298,7 +314,7 @@ defmodule SwapListener.CommandHandler do
 
   defp send_welcome_message(chat_id) do
     message = "Welcome to the Balancer Buy Bot. Type /help for more information."
-    TelegramClient.send_message(chat_id, message)
+    @telegram_client.send_message(chat_id, message)
   end
 
   defp valid_token_address?(address) do
@@ -308,41 +324,34 @@ defmodule SwapListener.CommandHandler do
   defp list_subscriptions(chat_id) do
     case ChatSubscriptionManager.list_subscriptions(chat_id) do
       [] ->
-        TelegramClient.send_message(chat_id, "You are not subscribed to any tokens.")
+        @telegram_client.send_message(chat_id, "You are not subscribed to any tokens.")
 
       subscriptions when is_list(subscriptions) ->
         message = format_subscription_list(subscriptions)
-        TelegramClient.send_message(chat_id, message)
+        @telegram_client.send_message(chat_id, message)
 
       _ ->
-        TelegramClient.send_message(chat_id, "Failed to fetch subscriptions.")
-    end
-  end
-
-  defp update_settings(chat_id, args) do
-    case parse_settings(args) do
-      {:ok, settings} ->
-        ChatSubscriptionManager.update_settings(chat_id, settings)
-        TelegramClient.send_message(chat_id, "Settings updated successfully. New settings: #{inspect(settings)}")
-
-      {:error, reason} ->
-        TelegramClient.send_message(chat_id, "Failed to update settings: #{reason}")
+        @telegram_client.send_message(chat_id, "Failed to fetch subscriptions.")
     end
   end
 
   defp parse_settings(args) do
-    settings =
-      Enum.map(args, fn arg ->
-        case String.split(arg, ":") do
-          [key, value] -> {:ok, {String.to_atom(key), value}}
-          _ -> {:error, "Invalid format for #{arg}"}
-        end
-      end)
+    if valid_settings_args?(args) do
+      settings =
+        Enum.map(args, fn arg ->
+          case String.split(arg, ":") do
+            [key, value] -> {:ok, {String.to_atom(key), value}}
+            _ -> {:error, "Invalid format for #{arg}"}
+          end
+        end)
 
-    if Enum.any?(settings, &match?({:error, _}, &1)) do
-      {:error, Enum.filter(settings, &match?({:error, _}, &1))}
+      if Enum.any?(settings, &match?({:error, _}, &1)) do
+        {:error, Enum.filter(settings, &match?({:error, _}, &1))}
+      else
+        {:ok, Enum.map(settings, fn {:ok, setting} -> setting end)}
+      end
     else
-      {:ok, Enum.map(settings, fn {:ok, setting} -> setting end)}
+      {:error, "Invalid settings format. Please provide settings in the format option:value."}
     end
   end
 
@@ -371,11 +380,11 @@ defmodule SwapListener.CommandHandler do
     Use these commands to stay updated on token trades and manage your alert preferences.
     """
 
-    TelegramClient.send_message(chat_id, message)
+    @telegram_client.send_message(chat_id, message)
   end
 
   defp unknown_command(chat_id) do
-    TelegramClient.send_message(
+    @telegram_client.send_message(
       chat_id,
       "Unknown command. Please type /help for a list of available commands."
     )
@@ -395,7 +404,7 @@ defmodule SwapListener.CommandHandler do
     Telegram Link: #{state.telegram_link}
     """
 
-    TelegramClient.send_message(chat_id, confirmation_message)
+    @telegram_client.send_message(chat_id, confirmation_message)
   end
 
   defp valid_link?(link) do
@@ -406,5 +415,11 @@ defmodule SwapListener.CommandHandler do
     Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} ->
       "Token Address: #{token_address}, Chain ID: #{chain_id}"
     end)
+  end
+
+  defp get_token_name(_token_address) do
+    # Implement the logic to get the token name based on the address
+    # Replace this with actual logic
+    "Sample Token"
   end
 end

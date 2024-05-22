@@ -6,14 +6,18 @@ defmodule SwapListener.Application do
 
   def start(_type, _args) do
     poller_children =
-      Enum.map(
-        BlockchainConfig.subgraph_urls(),
-        fn {network, url, chain_id} ->
-          Supervisor.child_spec({SwapListener.BalancerPoller, {network, url, chain_id}},
-            id: String.to_atom("BalancerPoller_#{network}")
-          )
-        end
-      )
+      if Mix.env() != :test do
+        Enum.map(
+          BlockchainConfig.subgraph_urls(),
+          fn {network, url, chain_id} ->
+            Supervisor.child_spec({SwapListener.BalancerPoller, {network, url, chain_id}},
+              id: String.to_atom("BalancerPoller_#{network}")
+            )
+          end
+        )
+      else
+        []
+      end
 
     children =
       [
@@ -21,10 +25,15 @@ defmodule SwapListener.Application do
         {Phoenix.PubSub, name: SwapListener.PubSub},
         {SwapListener.SwapListener, []},
         {SwapListener.TokenAdditionManager, []},
-        SwapListener.ChatSubscriptionManager,
-        # {Telegram.Poller, bots: [telegram_bot_config()]}
-        {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
-      ] ++ poller_children
+        SwapListener.ChatSubscriptionManager
+      ] ++
+        if Mix.env() != :test do
+          [
+            {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
+          ]
+        else
+          []
+        end ++ poller_children
 
     opts = [
       strategy: :one_for_one,

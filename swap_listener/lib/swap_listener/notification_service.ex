@@ -2,9 +2,10 @@ defmodule SwapListener.NotificationService do
   @moduledoc false
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
-  alias SwapListener.TelegramClient
 
   require Logger
+
+  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
 
   def handle_notification(notification) do
     Logger.debug("Handling notification: #{inspect(notification)}")
@@ -18,6 +19,16 @@ defmodule SwapListener.NotificationService do
     end
   end
 
+  defp send_message(subscription, details) do
+    message = format_message(details, subscription)
+
+    if subscription.alert_image_url do
+      @telegram_client.send_photo(subscription.chat_id, subscription.alert_image_url, message)
+    else
+      @telegram_client.send_message(subscription.chat_id, message)
+    end
+  end
+
   defp process_notification(%{
          "block" => block,
          "caller" => caller,
@@ -25,7 +36,7 @@ defmodule SwapListener.NotificationService do
          "id" => id,
          "inserted_at" => _,
          "pool_id" => pool_id,
-         "timestamp" => timestamp,
+         "timestamp" => _timestamp,
          "token_amount_in" => token_amount_in,
          "token_amount_out" => token_amount_out,
          "token_in" => token_in,
@@ -35,12 +46,9 @@ defmodule SwapListener.NotificationService do
          "tx" => tx,
          "updated_at" => _,
          "user_address" => user_address,
-         "value_usd" => value_usd
+         "value_usd" => value_usd,
+         "dexscreener_url" => dexscreener_url
        }) do
-    Logger.debug(
-      "Processing notification details: #{inspect(%{id: id, caller: caller, token_in: token_in, token_in_sym: token_in_sym, token_out: token_out, token_out_sym: token_out_sym, token_amount_in: token_amount_in, token_amount_out: token_amount_out, value_usd: value_usd, pool_id: pool_id, user_address: user_address, timestamp: timestamp, block: block, tx: tx, chain_id: chain_id})}"
-    )
-
     details = %{
       id: id,
       caller: caller,
@@ -51,6 +59,7 @@ defmodule SwapListener.NotificationService do
       token_amount_in: Decimal.new(Kernel.to_string(token_amount_in)),
       token_amount_out: Decimal.new(Kernel.to_string(token_amount_out)),
       value_usd: Decimal.new(Kernel.to_string(value_usd)),
+      dexscreener_url: dexscreener_url,
       pool_id: pool_id,
       user_address: user_address,
       block: block,
@@ -97,31 +106,20 @@ defmodule SwapListener.NotificationService do
   end
 
   defp should_notify?(details, subscription) do
-    details.chain_id == subscription.chain_id &&
+    subscription.paused == false &&
+      details.chain_id == subscription.chain_id &&
       details.token_out == subscription.token_address && details.token_amount_out >= subscription.min_buy_amount
   end
 
-  defp send_message(subscription, details) do
-    message = format_message(details, subscription)
-
-    if subscription.alert_image_url do
-      TelegramClient.send_photo(subscription.chat_id, subscription.alert_image_url, message)
-    else
-      TelegramClient.send_message(subscription.chat_id, message)
-    end
-  end
-
   defp format_message(details, subscription) do
-    # ensure that the token_out_in_usd is a number to divide it by the token_amount_out
     token_out_in_usd = Decimal.div(details.value_usd, details.token_amount_out)
 
     """
     *#{details.token_out_sym} PURCHASED!*
-
     Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
     Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
     Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
-    [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})
+    [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)}) | #{format_link("DEX Screener", details.dexscreener_url)}
     #{format_links(subscription)}
     """
   end
@@ -135,16 +133,12 @@ defmodule SwapListener.NotificationService do
     integer_part = Enum.at(parts, 0)
     decimal_part = Enum.at(parts, 1, "")
 
-    # Reverse the integer part to facilitate the insertion of commas every three digits.
     reversed_integer_part = String.reverse(integer_part)
 
-    # Insert commas every three digits.
     formatted_integer_part = Regex.replace(~r/(\d{3})(?=\d)/, reversed_integer_part, "\\1,")
 
-    # Reverse back to the normal order.
     formatted_integer_part = String.reverse(formatted_integer_part)
 
-    # Reassemble the full number with the decimal part if it exists.
     case decimal_part do
       "" -> formatted_integer_part
       _ -> formatted_integer_part <> "." <> decimal_part
@@ -158,7 +152,6 @@ defmodule SwapListener.NotificationService do
 
   defp format_links(subscription) do
     [
-      format_link("DEX Screener", subscription.dex_screener_link),
       format_link("Website", subscription.website_url),
       format_link("Twitter", subscription.twitter_handle),
       format_link("Discord", subscription.discord_link),

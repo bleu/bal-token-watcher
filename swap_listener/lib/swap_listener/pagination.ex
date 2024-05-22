@@ -2,9 +2,9 @@ defmodule SwapListener.Pagination do
   @moduledoc """
   Handles paginated fetching of data from a GraphQL endpoint.
   """
-  alias SwapListener.GraphQLClient
-
   require Logger
+
+  @graphql_client Application.get_env(:swap_listener, :graphql_client, SwapListener.GraphQLClientImpl)
 
   def paginate(endpoint, query, process_fn, initial_id \\ "", step \\ 1000, variables \\ %{}) do
     Logger.debug("Paginating data from endpoint: #{endpoint}",
@@ -20,7 +20,7 @@ defmodule SwapListener.Pagination do
   defp do_paginate(endpoint, query, process_fn, latest_id, step, variables) do
     variables = Map.put(variables, :latestId, latest_id)
 
-    case GraphQLClient.request(endpoint, query, variables) do
+    case @graphql_client.request(endpoint, query, variables) do
       {:ok, %{"data" => data}} ->
         Logger.debug("Fetched data successfully: #{inspect(data)}")
 

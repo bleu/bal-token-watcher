@@ -27,3 +27,7 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :swap_listener, :telegram_client, SwapListener.TelegramClientMock
+config :swap_listener, :http_client, SwapListener.HttpClientMock
+config :swap_listener, :graphql_client, SwapListener.GraphQLClientMock

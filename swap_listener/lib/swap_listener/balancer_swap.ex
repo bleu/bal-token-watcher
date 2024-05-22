@@ -20,10 +20,19 @@ defmodule SwapListener.BalancerSwap do
     field :block, :integer
     field :tx, :string
     field :chain_id, :integer
+    field :dexscreener_url, :string
 
     timestamps()
   end
 
+  @spec changeset(
+          {map(), map()}
+          | %{
+              :__struct__ => atom() | %{:__changeset__ => map(), optional(any()) => any()},
+              optional(atom()) => any()
+            },
+          :invalid | %{optional(:__struct__) => none(), optional(atom() | binary()) => any()}
+        ) :: Ecto.Changeset.t()
   @doc false
   def changeset(swap, attrs) do
     swap
@@ -36,6 +45,7 @@ defmodule SwapListener.BalancerSwap do
       :token_out_sym,
       :token_amount_in,
       :token_amount_out,
+      :dexscreener_url,
       :value_usd,
       :pool_id,
       :user_address,

@@ -45,7 +45,6 @@ defmodule SwapListener.BalancerPoller do
       )
 
     case Repo.one(query) do
-      # Return 0 if no swaps are found for this chain
       nil -> nil
       timestamp -> DateTime.to_unix(timestamp)
     end

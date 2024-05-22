@@ -3,9 +3,10 @@ defmodule SwapListener.TelegramBot do
   use Telegram.ChatBot
 
   alias SwapListener.CommandHandler
-  alias SwapListener.TelegramClient
 
   require Logger
+
+  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
 
   @session_ttl 60 * 1_000
 
@@ -43,7 +44,7 @@ defmodule SwapListener.TelegramBot do
       end
 
     if reply do
-      TelegramClient.send_message(reply.chat_id, reply.text)
+      @telegram_client.send_message(reply.chat_id, reply.text)
     end
 
     Logger.debug("New state: #{inspect(new_state)}")
