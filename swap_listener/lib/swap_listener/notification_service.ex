@@ -117,16 +117,15 @@ defmodule SwapListener.NotificationService do
     *#{details.token_out_sym} PURCHASED!*
 
     Spent: `#{details.token_amount_in} #{details.token_in_sym}`
-    Bought: `#{details.token_amount_out} #{details.token_out_sym}`
-    Price: $#{add_thousand_separator(details.value_usd)}
+    Bought: `#{details.token_amount_out} #{details.token_out_sym} ($#{add_thousand_separator(details.value_usd)})`
+    Price: `1 #{details.token_out_sym} = $#{add_thousand_separator(details.value_usd / details.token_amount_out)}`
     [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})
     #{format_links(subscription)}
     """
   end
 
-  # Adds thousand separators to a number string.
-  def add_thousand_separator(number_string) do
-    parts = String.split(number_string, ".", parts: 2)
+  def add_thousand_separator(number) when is_binary(number) do
+    parts = String.split(number, ".", parts: 2)
     integer_part = Enum.at(parts, 0)
     decimal_part = Enum.at(parts, 1, "")
 
@@ -144,6 +143,11 @@ defmodule SwapListener.NotificationService do
       "" -> formatted_integer_part
       _ -> formatted_integer_part <> "." <> decimal_part
     end
+  end
+
+  def add_thousand_separator(number) when is_struct(number, Decimal) do
+    number_string = Decimal.to_string(number)
+    add_thousand_separator(number_string)
   end
 
   defp format_links(subscription) do
