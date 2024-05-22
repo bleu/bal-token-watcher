@@ -6,7 +6,7 @@ defmodule SwapListener.TelegramClient do
   Sends a message to a specific chat_id.
   """
   def send_message(chat_id, text) do
-    token = Application.get_env(:swap_listener, :telegram_token)
+    token = Application.fetch_env!(:telegram, :token)
     Logger.debug("Sending message to #{chat_id}: #{text}")
 
     Telegram.Api.request(token, "sendMessage",
@@ -22,7 +22,7 @@ defmodule SwapListener.TelegramClient do
   Sends a photo to a specific chat_id with an optional caption.
   """
   def send_photo(chat_id, photo_url, caption \\ "") do
-    token = Application.get_env(:swap_listener, :telegram_token)
+    token = Application.fetch_env!(:telegram, :token)
     Logger.debug("Sending photo to #{chat_id}: #{photo_url} with caption: #{caption}")
 
     Telegram.Api.request(token, "sendPhoto",

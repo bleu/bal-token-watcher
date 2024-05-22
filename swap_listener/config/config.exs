@@ -4,10 +4,18 @@ config :swap_listener,
   ecto_repos: [SwapListener.Repo]
 
 config :honeybadger,
-  api_key: "hbp_7sS3varMhzYS30XCSp33b1O13dadMp1HUtdU",
+  api_key: System.get_env("HONEYBADGER_API_KEY"),
   use_logger: true
 
-config :swap_listener, :telegram_token, "7018925703:AAHy4IExdHx7qiRcOsdmOoHKTu3IJjsMmv8"
+config :telegram,
+  webserver: Telegram.WebServer.Cowboy,
+  token: System.get_env("TELEGRAM_TOKEN"),
+  webhook: [
+    host: System.get_env("TELEGRAM_WEBHOOK_HOST"),
+    port: 443,
+    local_port: 4000,
+    max_connections: 40
+  ]
 
 config :tesla, adapter: {Tesla.Adapter.Hackney, [recv_timeout: 40_000]}
 

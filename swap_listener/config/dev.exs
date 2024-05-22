@@ -13,8 +13,6 @@ config :swap_listener, SwapListener.Repo,
   pool_size: 10,
   log_level: false
 
-config :logger, level: :info
-
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed
@@ -42,7 +40,7 @@ config :logger, level: :info
 config :swap_listener, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+config :logger, :console, format: "[$level] $message\n", level: :debug
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

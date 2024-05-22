@@ -22,7 +22,8 @@ defmodule SwapListener.Application do
         {SwapListener.SwapListener, []},
         {SwapListener.TokenAdditionManager, []},
         SwapListener.ChatSubscriptionManager,
-        {Telegram.Poller, bots: [telegram_bot_config()]}
+        # {Telegram.Poller, bots: [telegram_bot_config()]}
+        {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
       ] ++ poller_children
 
     opts = [
@@ -35,8 +36,12 @@ defmodule SwapListener.Application do
     Supervisor.start_link(children, opts)
   end
 
+  defp webhook_config do
+    Application.fetch_env!(:telegram, :webhook)
+  end
+
   defp telegram_bot_config do
-    token = Application.fetch_env!(:swap_listener, :telegram_token)
+    token = Application.fetch_env!(:telegram, :token)
     {SwapListener.TelegramBot, token: token, max_bot_concurrency: 10}
   end
 end

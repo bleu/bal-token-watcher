@@ -59,7 +59,8 @@ defmodule SwapListener.MixProject do
       {:httpoison, "~> 1.8"},
       {:honeybadger, "~> 0.16"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:styler, "~> 0.11", only: [:dev, :test], runtime: false}
+      {:styler, "~> 0.11", only: [:dev, :test], runtime: false},
+      {:plug_cowboy, "~> 2.5"}
     ]
   end
 
