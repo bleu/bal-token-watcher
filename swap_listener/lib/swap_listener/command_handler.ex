@@ -229,8 +229,7 @@ defmodule SwapListener.CommandHandler do
           new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :alert_image_url)
 
           token_name = get_token_name(token_address)
-          # only show tokenName if it is not empty
-          confirmation_message = "You have selected the token: #{token_name}(#{token_address})."
+          confirmation_message = "You have selected the token: #{token_name} (#{token_address})."
 
           reply = %{chat_id: chat_id, text: "#{confirmation_message}\nPlease enter the alert image URL:"}
           {new_state, reply}
@@ -405,9 +404,17 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp format_subscription_list(subscriptions) do
-    Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} ->
-      "Chain: #{BlockchainConfig.get_chain_label(chain_id)}, Token Address: #{token_address}"
-    end)
+    """
+    ```
+    | Chain             | Token Address              |
+    |-------------------|----------------------------|
+    #{Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} -> "| #{BlockchainConfig.get_chain_label(chain_id)} | #{truncate_address(token_address)} |" end)}
+    ```
+    """
+  end
+
+  defp truncate_address(address) do
+    String.slice(address, 0..5) <> "..." <> String.slice(address, -4..-1)
   end
 
   defp get_token_name(token_address) do
