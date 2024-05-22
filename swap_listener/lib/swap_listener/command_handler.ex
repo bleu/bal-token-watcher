@@ -1,7 +1,12 @@
 defmodule SwapListener.CommandHandler do
   @moduledoc false
+  import Ecto.Query, only: [from: 2]
+
+  alias SwapListener.BalancerSwap
+  alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandlerHelper
+  alias SwapListener.Repo
 
   require Logger
 
@@ -180,7 +185,7 @@ defmodule SwapListener.CommandHandler do
 
         @telegram_client.send_message(
           chat_id,
-          "Settings updated successfully for #{token_address} on chain #{chain_id}. New settings: #{inspect(settings)}"
+          "Settings updated successfully for #{token_address} on chain #{BlockchainConfig.get_chain_label(chain_id)}. New settings: #{inspect(settings)}"
         )
 
       {:error, reason} ->
@@ -224,7 +229,8 @@ defmodule SwapListener.CommandHandler do
           new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :alert_image_url)
 
           token_name = get_token_name(token_address)
-          confirmation_message = "You have selected the token: #{token_name} (#{token_address})."
+          # only show tokenName if it is not empty
+          confirmation_message = "You have selected the token: #{token_name}(#{token_address})."
 
           reply = %{chat_id: chat_id, text: "#{confirmation_message}\nPlease enter the alert image URL:"}
           {new_state, reply}
@@ -400,13 +406,12 @@ defmodule SwapListener.CommandHandler do
 
   defp format_subscription_list(subscriptions) do
     Enum.map_join(subscriptions, "\n", fn %{token_address: token_address, chain_id: chain_id} ->
-      "Token Address: #{token_address}, Chain ID: #{chain_id}"
+      "Chain: #{BlockchainConfig.get_chain_label(chain_id)}, Token Address: #{token_address}"
     end)
   end
 
-  defp get_token_name(_token_address) do
-    # Implement the logic to get the token name based on the address
-    # Replace this with actual logic
-    "Sample Token"
+  defp get_token_name(token_address) do
+    Repo.one(from(s in BalancerSwap, where: s.token_in == ^token_address, select: s.token_in_name)) ||
+      Repo.one(from(s in BalancerSwap, where: s.token_out == ^token_address, select: s.token_out_name)) || ""
   end
 end

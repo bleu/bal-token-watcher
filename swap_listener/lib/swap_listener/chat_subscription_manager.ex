@@ -23,6 +23,7 @@ defmodule SwapListener.ChatSubscriptionManager do
     query =
       from(c in ChatSubscription,
         where: c.chat_id == ^chat_id,
+        order_by: [asc: c.chain_id, asc: c.token_address],
         select: %{
           chat_id: c.chat_id,
           chain_id: c.chain_id,

@@ -55,4 +55,8 @@ defmodule SwapListener.BlockchainConfig do
   def chain_scanner_map, do: @chain_scanner_map
 
   def balancer_pool_map, do: @balancer_pool_map
+
+  def get_chain_label(chain_id) do
+    "#{Map.get(@chain_name_map, chain_id)} (#{chain_id})"
+  end
 end
