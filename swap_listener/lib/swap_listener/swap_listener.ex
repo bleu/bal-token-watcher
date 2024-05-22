@@ -15,7 +15,7 @@ defmodule SwapListener.SwapListener do
     ensure_trigger_exists()
 
     # Adjustments: Configure the connection with the appropriate options, including auto-reconnect.
-    notifications_opts = [name: SwapListener.Notifications, auto_reconnect: true]
+    notifications_opts = [name: SwapListener.Notifications, auto_reconnect: true, prepare: :unnamed]
 
     # Start the Postgrex notification listener with the merged options.
     {:ok, pid} =
