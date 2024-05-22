@@ -2,6 +2,8 @@ defmodule SwapListener.BalancerPoller do
   @moduledoc false
   use GenServer
 
+  import Ecto.Query, only: [from: 2]
+
   alias SwapListener.BalancerSwap
   alias SwapListener.Pagination
   alias SwapListener.Repo
@@ -9,8 +11,8 @@ defmodule SwapListener.BalancerPoller do
   require IEx
   require Logger
 
-  @poll_interval :timer.seconds(10)
-  @batch_size 10
+  @poll_interval :timer.seconds(1)
+  @batch_size 100
 
   def start_link({network, url, chain_id}) do
     GenServer.start_link(__MODULE__, %{network: network, url: url, chain_id: chain_id},
@@ -34,10 +36,25 @@ defmodule SwapListener.BalancerPoller do
     Process.send_after(self(), :poll, @poll_interval)
   end
 
+  defp get_latest_timestamp(chain_id) do
+    query =
+      from(c in BalancerSwap,
+        where: c.chain_id == ^chain_id,
+        select: max(c.timestamp)
+      )
+
+    case Repo.one(query) do
+      nil -> nil
+      timestamp -> DateTime.to_unix(timestamp)
+    end
+  end
+
   defp poll_balancer_subgraph(url, chain_id) do
+    latest_timestamp = get_latest_timestamp(chain_id) || DateTime.to_unix(DateTime.utc_now())
+
     query = """
-    query ($latestId: ID!) {
-      swaps(first: #{@batch_size}, orderBy: timestamp, orderDirection: desc, where: {id_gt: $latestId}) {
+    query ($latestTimestamp: Int!) {
+      swaps(first: #{@batch_size}, orderBy: timestamp, orderDirection: desc, where: {timestamp_gt: $latestTimestamp}) {
         id
         caller
         tokenIn
@@ -60,7 +77,9 @@ defmodule SwapListener.BalancerPoller do
     }
     """
 
-    Pagination.paginate(url, query, &process_swaps(&1, chain_id), "", @batch_size)
+    variables = %{"latestTimestamp" => latest_timestamp}
+    Logger.debug("Polling Balancer subgraph with variables: #{inspect(variables)}")
+    Pagination.paginate(url, query, &process_swaps(&1, chain_id), "", @batch_size, variables)
   end
 
   defp process_swaps(data, chain_id) do

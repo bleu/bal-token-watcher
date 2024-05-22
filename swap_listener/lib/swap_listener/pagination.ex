@@ -7,6 +7,13 @@ defmodule SwapListener.Pagination do
   require Logger
 
   def paginate(endpoint, query, process_fn, initial_id \\ "", step \\ 1000, variables \\ %{}) do
+    Logger.debug("Paginating data from endpoint: #{endpoint}",
+      query: query,
+      initial_id: initial_id,
+      step: step,
+      variables: variables
+    )
+
     do_paginate(endpoint, query, process_fn, initial_id, step, variables)
   end
 
@@ -21,9 +28,15 @@ defmodule SwapListener.Pagination do
           :ok ->
             ids = get_ids_from_data(data)
 
-            if length(ids) < step,
-              do: :done,
-              else: do_paginate(endpoint, query, process_fn, List.last(ids), step, variables)
+            if length(ids) < step do
+              :done
+            else
+              do_paginate(endpoint, query, process_fn, List.last(ids), step, variables)
+            end
+
+          :done ->
+            Logger.info("Reached end of pagination", latest_id: latest_id, step: step, variables: variables, data: data)
+            :done
 
           error ->
             Logger.error("Failed to process data: #{inspect(error)}")

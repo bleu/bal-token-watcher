@@ -84,7 +84,7 @@ defmodule SwapListener.NotificationService do
           if should_notify?(details, subscription) do
             send_message(subscription, details)
           else
-            Logger.info("Notification does not match subscription criteria: #{inspect(subscription)}")
+            Logger.debug("Notification does not match subscription criteria: #{inspect(subscription)}")
           end
         end)
 
@@ -103,7 +103,6 @@ defmodule SwapListener.NotificationService do
 
   defp send_message(subscription, details) do
     message = format_message(details, subscription)
-    TelegramClient.send_message(subscription.chat_id, message)
 
     if subscription.alert_image_url do
       TelegramClient.send_photo(subscription.chat_id, subscription.alert_image_url, message)
@@ -113,15 +112,22 @@ defmodule SwapListener.NotificationService do
   end
 
   defp format_message(details, subscription) do
+    # ensure that the token_out_in_usd is a number to divide it by the token_amount_out
+    token_out_in_usd = Decimal.div(details.value_usd, details.token_amount_out)
+
     """
     *#{details.token_out_sym} PURCHASED!*
 
-    Spent: `#{details.token_amount_in} #{details.token_in_sym}`
-    Bought: `#{details.token_amount_out} #{details.token_out_sym} ($#{add_thousand_separator(details.value_usd)})`
-    Price: `1 #{details.token_out_sym} = $#{add_thousand_separator(details.value_usd / details.token_amount_out)}`
+    Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
+    Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
+    Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
     [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})
     #{format_links(subscription)}
     """
+  end
+
+  def humanize_value(value) do
+    add_thousand_separator(Decimal.to_string(Decimal.round(value, 6), :normal))
   end
 
   def add_thousand_separator(number) when is_binary(number) do

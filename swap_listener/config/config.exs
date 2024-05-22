@@ -35,6 +35,6 @@ config :esbuild,
 config :tailwind,
   version: "3.2.7"
 
-config :logger, level: :info
+config :logger, level: :debug
 
 import_config "#{config_env()}.exs"
