@@ -1,7 +1,7 @@
 defmodule SwapListener.CommandHandler do
   @moduledoc false
-  alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
+  alias SwapListener.CommandHandlerHelper
 
   require Logger
 
@@ -13,7 +13,7 @@ defmodule SwapListener.CommandHandler do
     *Subscribe to Buy Alerts*
     `/subscribe [token_address] [chain_id]` - Subscribe to buy alerts for a specific token on a specified chain.
     *Example:* `/subscribe 0xTokenAddress 1`
-    #{available_chains_text()}
+    #{CommandHandlerHelper.available_chains_text()}
     """,
     "/unsubscribe" => """
     *Unsubscribe from Buy Alerts*
@@ -42,14 +42,6 @@ defmodule SwapListener.CommandHandler do
     "/help" =>
       "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
   }
-
-  defp available_chains_text do
-    chains = BlockchainConfig.subgraph_urls()
-
-    chains
-    |> Enum.map_join("\n", fn {name, _, chain_id} -> "- #{name} (#{chain_id})" end)
-    |> then(&("\n*Available Chains:*\n" <> &1))
-  end
 
   def handle_command(command, chat_id, args, state) do
     Logger.debug("Received command: #{command} with args: #{inspect(args)}")
@@ -149,7 +141,7 @@ defmodule SwapListener.CommandHandler do
   defp handle_slash_command("/addToken", chat_id, _args, state) do
     state = Map.put(state, :step, :chain_id)
 
-    reply = %{chat_id: chat_id, text: "Please select the chain:#{available_chains_text()}"}
+    reply = %{chat_id: chat_id, text: "Please select the chain:#{CommandHandlerHelper.available_chains_text()}"}
 
     {state, reply}
   end
