@@ -3,7 +3,6 @@ defmodule SwapListener.NotificationService do
 
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
-  alias SwapListener.DexscreenerUrlManager
 
   require Decimal
   require Logger

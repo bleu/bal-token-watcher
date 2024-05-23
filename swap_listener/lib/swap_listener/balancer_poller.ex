@@ -6,7 +6,6 @@ defmodule SwapListener.BalancerPoller do
 
   alias SwapListener.BalancerSwap
   alias SwapListener.DexscreenerCache
-  alias SwapListener.DexscreenerClient
   alias SwapListener.Pagination
   alias SwapListener.Repo
 

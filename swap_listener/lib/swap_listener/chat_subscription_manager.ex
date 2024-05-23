@@ -175,7 +175,8 @@ defmodule SwapListener.ChatSubscriptionManager do
             handle_db_response(
               {:ok, nil},
               chat_id,
-              "Settings updated successfully for #{token_address} on chain #{chain_id}. New settings: #{inspect(subscription_to_json(updated_subscription))}."
+              "Settings updated successfully for #{token_address} on chain #{chain_id}. \n
+              New settings: #{inspect(format_subscription_settings(updated_subscription))}."
             )
 
           {:error, changeset} ->
@@ -184,21 +185,6 @@ defmodule SwapListener.ChatSubscriptionManager do
             handle_db_response({:error, changeset}, chat_id, "Failed to update settings.")
         end
     end
-  end
-
-  def subscription_to_json(subscription) do
-    %{
-      token_address: subscription.token_address,
-      chain_id: subscription.chain_id,
-      trade_size_step: subscription.trade_size_step,
-      trade_size_emoji: subscription.trade_size_emoji,
-      min_buy_amount: subscription.min_buy_amount,
-      alert_image_url: subscription.alert_image_url,
-      website_url: subscription.website_url,
-      twitter_handle: subscription.twitter_handle,
-      discord_link: subscription.discord_link,
-      telegram_link: subscription.telegram_link
-    }
   end
 
   def pause(chat_id, token_address, chain_id) do
@@ -289,5 +275,20 @@ defmodule SwapListener.ChatSubscriptionManager do
       {:ok, _subscription} -> :ok
       {:error, changeset} -> Logger.error("Failed to adjust min_buy_amount: #{inspect(changeset.errors)}")
     end
+  end
+
+  defp format_subscription_settings(subscription) do
+    """
+    *Token Address:* #{subscription.token_address}
+    *Chain ID:* #{subscription.chain_id}
+    *Trade Size Step:* #{subscription.trade_size_step}
+    *Trade Size Emoji:* #{subscription.trade_size_emoji}
+    *Min Buy Amount:* #{subscription.min_buy_amount}
+    *Alert Image URL:* #{subscription.alert_image_url}
+    *Website URL:* #{subscription.website_url}
+    *Twitter Handle:* #{subscription.twitter_handle}
+    *Discord Link:* #{subscription.discord_link}
+    *Telegram Link:* #{subscription.telegram_link}
+    """
   end
 end

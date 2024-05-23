@@ -1,6 +1,6 @@
 defmodule SwapListener.CommandHandler.Settings do
   @moduledoc false
-  alias SwapListener.BlockchainConfig
+
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler.Utils
 
