@@ -6,8 +6,10 @@ defmodule SwapListener.DexscreenerCache do
 
   @primary_key {:id, :string, autogenerate: false}
   schema "dexscreener_cache" do
-    field :dexscreener_url, :string
+    field :token_in, :string
+    field :token_out, :string
     field :chain_id, :integer
+    field :dexscreener_url, :string
 
     timestamps()
   end

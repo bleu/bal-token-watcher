@@ -4,29 +4,50 @@ defmodule SwapListener.DexscreenerClient do
   """
   require Logger
 
-  @api_url "https://api.dexscreener.com/latest/dex/pairs"
+  @api_url "https://api.dexscreener.com/latest/dex/search"
 
-  def get_pair_url(chain_id, pair_address) do
-    url = "#{@api_url}/#{chain_id}/#{pair_address}"
+  @dexscreener_chain_id_map %{
+    1 => "ethereum",
+    137 => "polygon",
+    1101 => "polygonzkevm",
+    42_161 => "arbitrum",
+    100 => "optimism",
+    10 => "gnosis",
+    43_114 => "avalanche",
+    8453 => "base"
+  }
 
-    case HTTPoison.get(url) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, %{"pairs" => [pair | _]}} ->
-            {:ok, pair["url"]}
+  defp get_dexscreener_chain_id(chain_id) do
+    Map.get(@dexscreener_chain_id_map, chain_id, fn ->
+      Logger.warning("No chain ID mapping found for chain ID #{chain_id}")
+      nil
+    end)
+  end
 
-          {:ok, _} ->
-            {:error, "No pairs found"}
+  def get_dexscreener_url(chain_id, token_in, token_out) do
+    url = "#{@api_url}?q=#{token_in}%20#{token_out}"
 
-          {:error, _} = error ->
-            error
-        end
-
-      {:ok, %HTTPoison.Response{status_code: status_code}} ->
-        {:error, "Failed to fetch Dexscreener URL: HTTP #{status_code}"}
-
+    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(url),
+         {:ok, %{"pairs" => pairs}} <- Jason.decode(body) do
+      chain_id_str = get_dexscreener_chain_id(chain_id)
+      pair = Enum.find(pairs, fn pair -> pair["chainId"] == chain_id_str and pair["dexId"] == "balancer" end)
+      [pair["pairAddress"], pair["url"]]
+    else
       {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
+        Logger.error("Failed to fetch URL: #{url}. Reason: #{inspect(reason)}")
+        nil
+
+      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+        Logger.error("Failed to fetch URL: #{url}. Status code: #{status_code}. Body: #{body}")
+        nil
+
+      {:error, reason} ->
+        Logger.error("Failed to decode response: #{inspect(reason)}")
+        nil
+
+      nil ->
+        Logger.warning("No pair found for #{token_in}/#{token_out} on chain #{chain_id}")
+        nil
     end
   end
 end

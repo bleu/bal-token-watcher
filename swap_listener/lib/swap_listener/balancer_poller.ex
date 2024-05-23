@@ -84,7 +84,7 @@ defmodule SwapListener.BalancerPoller do
         block: swap["block"],
         tx: swap["tx"],
         chain_id: chain_id,
-        dexscreener_url: get_or_fetch_dexscreener_url(swap["id"], chain_id)
+        dexscreener_url: get_or_fetch_dexscreener_url(chain_id, swap["tokenIn"], swap["tokenOut"])
       })
 
     Repo.transaction(fn ->
@@ -102,21 +102,28 @@ defmodule SwapListener.BalancerPoller do
     end)
   end
 
-  defp get_or_fetch_dexscreener_url(pair_id, chain_id) do
-    case Repo.get_by(DexscreenerCache, id: pair_id) do
+  defp get_or_fetch_dexscreener_url(chain_id, token_in, token_out) do
+    case Repo.get_by(DexscreenerCache, token_in: token_in, token_out: token_out, chain_id: chain_id) do
       nil ->
-        with {:ok, url} <- DexscreenerClient.get_pair_url(chain_id, pair_id),
-             {:ok, _} <-
-               Repo.insert(
-                 DexscreenerCache.changeset(%DexscreenerCache{}, %{id: pair_id, dexscreener_url: url, chain_id: chain_id})
-               ) do
-          url
-        else
-          _ -> nil
+        case DexscreenerClient.get_dexscreener_url(chain_id, token_in, token_out) do
+          nil -> nil
+          [pair_address, url] -> store_dexscreener_url(pair_address, token_in, token_out, chain_id, url)
         end
 
       %DexscreenerCache{dexscreener_url: url} ->
         url
     end
+  end
+
+  defp store_dexscreener_url(pair_address, token_in, token_out, chain_id, url) do
+    Repo.insert(%DexscreenerCache{
+      id: pair_address,
+      token_in: token_in,
+      token_out: token_out,
+      chain_id: chain_id,
+      dexscreener_url: url
+    })
+
+    url
   end
 end
