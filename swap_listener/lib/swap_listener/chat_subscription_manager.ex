@@ -171,11 +171,11 @@ defmodule SwapListener.ChatSubscriptionManager do
         changeset = ChatSubscription.changeset(subscription, settings)
 
         case Repo.update(changeset) do
-          {:ok, _subscription} ->
+          {:ok, updated_subscription} ->
             handle_db_response(
               {:ok, nil},
               chat_id,
-              "Settings updated successfully for #{token_address} on chain #{chain_id}."
+              "Settings updated successfully for #{token_address} on chain #{chain_id}. New settings: #{inspect(subscription_to_json(updated_subscription))}."
             )
 
           {:error, changeset} ->
@@ -184,6 +184,21 @@ defmodule SwapListener.ChatSubscriptionManager do
             handle_db_response({:error, changeset}, chat_id, "Failed to update settings.")
         end
     end
+  end
+
+  def subscription_to_json(subscription) do
+    %{
+      token_address: subscription.token_address,
+      chain_id: subscription.chain_id,
+      trade_size_step: subscription.trade_size_step,
+      trade_size_emoji: subscription.trade_size_emoji,
+      min_buy_amount: subscription.min_buy_amount,
+      alert_image_url: subscription.alert_image_url,
+      website_url: subscription.website_url,
+      twitter_handle: subscription.twitter_handle,
+      discord_link: subscription.discord_link,
+      telegram_link: subscription.telegram_link
+    }
   end
 
   def pause(chat_id, token_address, chain_id) do

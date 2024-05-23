@@ -38,11 +38,6 @@ defmodule SwapListener.CommandHandler.Settings do
       {:ok, settings} ->
         ChatSubscriptionManager.update_subscription_settings(chat_id, token_address, chain_id, settings)
 
-        @telegram_client.send_message(
-          chat_id,
-          "Settings updated successfully for #{token_address} on chain #{BlockchainConfig.get_chain_label(chain_id)}. New settings: #{inspect(settings)}"
-        )
-
       {:error, reason} ->
         @telegram_client.send_message(chat_id, "Failed to update settings: #{reason}")
     end
@@ -51,25 +46,29 @@ defmodule SwapListener.CommandHandler.Settings do
   defp parse_settings(args) do
     if valid_settings_args?(args) do
       settings =
-        Enum.map(args, fn arg ->
+        Enum.reduce(args, %{}, fn arg, acc ->
           case String.split(arg, ":") do
-            [key, value] -> {:ok, {String.to_atom(key), value}}
-            _ -> {:error, "Invalid format for #{arg}"}
+            [key, value] -> Map.put(acc, String.to_atom(key), value)
+            _ -> acc
           end
         end)
 
-      if Enum.any?(settings, &match?({:error, _}, &1)) do
-        {:error, Enum.filter(settings, &match?({:error, _}, &1))}
-      else
-        {:ok, Enum.map(settings, fn {:ok, setting} -> setting end)}
-      end
+      {:ok, settings}
     else
       {:error, "Invalid settings format. Please provide settings in the format option:value."}
     end
   end
 
   defp valid_settings_args?(args) do
-    allowed_keys = ["min_buy_amount", "trade_size_step", "alert_image_url"]
+    allowed_keys = [
+      "min_buy_amount",
+      "trade_size_step",
+      "alert_image_url",
+      "website_url",
+      "twitter_handle",
+      "discord_link",
+      "telegram_link"
+    ]
 
     Enum.all?(args, fn arg ->
       case String.split(arg, ":") do
