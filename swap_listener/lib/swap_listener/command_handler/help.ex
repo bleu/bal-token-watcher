@@ -1,9 +1,8 @@
 defmodule SwapListener.CommandHandler.Help do
   @moduledoc false
   alias SwapListener.CommandHandlerHelper
-  alias SwapListener.TelegramClientImpl
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   @commands %{
     "/start" => "*Welcome to the Balancer Buy Bot.* Type `/help` for more information.",

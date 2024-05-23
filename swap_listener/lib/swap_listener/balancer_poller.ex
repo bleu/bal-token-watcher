@@ -12,7 +12,7 @@ defmodule SwapListener.BalancerPoller do
 
   require Logger
 
-  @poll_interval :timer.seconds(1)
+  @poll_interval :timer.seconds(10)
   @batch_size 100
 
   def start_link({network, url, chain_id}) do

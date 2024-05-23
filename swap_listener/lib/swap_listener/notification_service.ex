@@ -1,11 +1,12 @@
 defmodule SwapListener.NotificationService do
   @moduledoc false
+
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
 
   require Logger
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle_notification(notification) do
     Logger.debug("Handling notification: #{inspect(notification)}")
@@ -27,6 +28,8 @@ defmodule SwapListener.NotificationService do
     else
       @telegram_client.send_message(subscription.chat_id, message)
     end
+
+    :ok
   end
 
   defp process_notification(%{
@@ -91,7 +94,7 @@ defmodule SwapListener.NotificationService do
                         and details: #{inspect(details)}")
 
           if should_notify?(details, subscription) do
-            send_message(subscription, details)
+            @telegram_client.send_message(subscription.chat_id, format_message(details, subscription))
           else
             Logger.debug("Notification does not match subscription criteria: #{inspect(subscription)}")
           end

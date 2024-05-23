@@ -9,18 +9,24 @@ defmodule SwapListener.TelegramClientImpl do
   """
   def send_message(chat_id, text) do
     token = Application.fetch_env!(:telegram, :token)
-    Logger.debug("Sending message to #{chat_id}: #{text}")
+    Logger.debug("Attempting to send message to #{chat_id}: #{text}")
 
-    Telegram.Api.request(token, "sendMessage",
-      chat_id: chat_id,
-      text: text,
-      parse_mode: "Markdown"
-    )
+    case Telegram.Api.request(token, "sendMessage",
+           chat_id: chat_id,
+           text: text,
+           parse_mode: "Markdown"
+         ) do
+      {:ok, response} ->
+        Logger.debug("Message sent successfully to #{chat_id}. Response: #{inspect(response)}")
+        :ok
 
-    :ok
+      {:error, error} ->
+        Logger.error("Failed to send message to #{chat_id}: #{inspect(error)}")
+        {:error, error}
+    end
   rescue
     error ->
-      Logger.error("Failed to send message: #{inspect(error)}")
+      Logger.error("Unexpected error while sending message to #{chat_id}: #{inspect(error)}")
       {:error, error}
   end
 
@@ -29,19 +35,25 @@ defmodule SwapListener.TelegramClientImpl do
   """
   def send_photo(chat_id, photo_url, caption \\ "") do
     token = Application.fetch_env!(:telegram, :token)
-    Logger.debug("Sending photo to #{chat_id}: #{photo_url} with caption: #{caption}")
+    Logger.debug("Attempting to send photo to #{chat_id}: #{photo_url} with caption: #{caption}")
 
-    Telegram.Api.request(token, "sendPhoto",
-      chat_id: chat_id,
-      photo: photo_url,
-      caption: caption,
-      parse_mode: "Markdown"
-    )
+    case Telegram.Api.request(token, "sendPhoto",
+           chat_id: chat_id,
+           photo: photo_url,
+           caption: caption,
+           parse_mode: "Markdown"
+         ) do
+      {:ok, response} ->
+        Logger.debug("Photo sent successfully to #{chat_id}. Response: #{inspect(response)}")
+        :ok
 
-    :ok
+      {:error, error} ->
+        Logger.error("Failed to send photo to #{chat_id}: #{inspect(error)}")
+        {:error, error}
+    end
   rescue
     error ->
-      Logger.error("Failed to send photo: #{inspect(error)}")
+      Logger.error("Unexpected error while sending photo to #{chat_id}: #{inspect(error)}")
       {:error, error}
   end
 end

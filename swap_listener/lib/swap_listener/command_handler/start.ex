@@ -1,8 +1,7 @@
 defmodule SwapListener.CommandHandler.Start do
   @moduledoc false
-  alias SwapListener.TelegramClientImpl
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle(chat_id, _args, state) do
     send_welcome_message(chat_id)

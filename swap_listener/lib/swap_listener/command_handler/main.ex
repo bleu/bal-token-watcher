@@ -1,6 +1,5 @@
 defmodule SwapListener.CommandHandler.Main do
   @moduledoc false
-  import Ecto.Query, only: [from: 2]
 
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler.Help
@@ -12,11 +11,10 @@ defmodule SwapListener.CommandHandler.Main do
   alias SwapListener.CommandHandler.Unsubscribe
   alias SwapListener.CommandHandler.Utils
   alias SwapListener.CommandHandlerHelper
-  alias SwapListener.Repo
 
   require Logger
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle_command(command, chat_id, args, state) do
     Logger.debug("Received command: #{command} with args: #{inspect(args)}")

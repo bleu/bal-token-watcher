@@ -5,7 +5,7 @@ defmodule SwapListener.Application do
   alias SwapListener.BlockchainConfig
 
   def start(_type, _args) do
-    children = default_children() ++ env_specific_children() ++ poller_children()
+    children = default_children() ++ poller_children()
 
     opts = [strategy: :one_for_one, name: SwapListener.Supervisor]
 
@@ -18,17 +18,16 @@ defmodule SwapListener.Application do
       {Phoenix.PubSub, name: SwapListener.PubSub},
       {SwapListener.SwapListener, []},
       {SwapListener.TokenAdditionManager, []},
-      SwapListener.ChatSubscriptionManager
+      SwapListener.ChatSubscriptionManager,
+      {SwapListener.RateLimiter, []},
+      {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
     ]
-  end
-
-  defp env_specific_children do
-    [{Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}]
   end
 
   defp poller_children do
     if Mix.env() != :test do
       Enum.map(BlockchainConfig.subgraph_urls(), &poller_child_spec/1)
+      []
     else
       []
     end

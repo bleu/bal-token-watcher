@@ -2,9 +2,8 @@ defmodule SwapListener.CommandHandler.Unsubscribe do
   @moduledoc false
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler.Utils
-  alias SwapListener.TelegramClientImpl
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle(chat_id, args, state) do
     case args do
@@ -25,8 +24,9 @@ defmodule SwapListener.CommandHandler.Unsubscribe do
     end
   end
 
+  @spec handle_all(any(), any(), any()) :: {any(), nil}
   def handle_all(chat_id, _args, state) do
-    ChatSubscriptionManager.unsubscribe_all(chat_id)
+    ChatSubscriptionManager.unsubscribe(chat_id)
     {state, nil}
   end
 

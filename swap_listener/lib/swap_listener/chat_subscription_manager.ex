@@ -2,14 +2,14 @@ defmodule SwapListener.ChatSubscriptionManager do
   @moduledoc false
   use GenServer
 
-  import Ecto.Query, only: [from: 2]
+  import Ecto.Query
 
   alias SwapListener.ChatSubscription
   alias SwapListener.Repo
 
   require Logger
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
@@ -256,5 +256,14 @@ defmodule SwapListener.ChatSubscriptionManager do
 
   defp handle_db_response({:error, _changeset}, chat_id, message) do
     @telegram_client.send_message(chat_id, "❌ #{message}")
+  end
+
+  def adjust_min_buy_amount(subscription, new_min_buy_amount) do
+    changeset = ChatSubscription.changeset(subscription, %{min_buy_amount: new_min_buy_amount})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to adjust min_buy_amount: #{inspect(changeset.errors)}")
+    end
   end
 end

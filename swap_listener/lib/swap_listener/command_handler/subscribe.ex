@@ -1,9 +1,8 @@
 defmodule SwapListener.CommandHandler.Subscribe do
   @moduledoc false
   alias SwapListener.ChatSubscriptionManager
-  alias SwapListener.TelegramClientImpl
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle(chat_id, [token_address, chain_id], state) do
     parsed_chain_id = String.to_integer(chain_id)

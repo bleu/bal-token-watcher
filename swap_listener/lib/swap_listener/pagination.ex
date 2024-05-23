@@ -4,15 +4,10 @@ defmodule SwapListener.Pagination do
   """
   require Logger
 
-  @graphql_client Application.get_env(:swap_listener, :graphql_client, SwapListener.GraphQLClientImpl)
+  @graphql_client Application.compile_env(:swap_listener, :graphql_client, SwapListener.GraphQLClientImpl)
 
   def paginate(endpoint, query, process_fn, initial_id \\ "", step \\ 1000, variables \\ %{}) do
-    Logger.debug("Paginating data from endpoint: #{endpoint}",
-      query: query,
-      initial_id: initial_id,
-      step: step,
-      variables: variables
-    )
+    Logger.debug("Paginating data from endpoint: #{endpoint}")
 
     do_paginate(endpoint, query, process_fn, initial_id, step, variables)
   end
@@ -35,7 +30,7 @@ defmodule SwapListener.Pagination do
             end
 
           :done ->
-            Logger.info("Reached end of pagination", latest_id: latest_id, step: step, variables: variables, data: data)
+            Logger.info("Reached end of pagination")
             :done
 
           error ->

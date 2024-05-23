@@ -3,9 +3,8 @@ defmodule SwapListener.CommandHandler.Settings do
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler.Utils
-  alias SwapListener.TelegramClientImpl
 
-  @telegram_client Application.get_env(:swap_listener, :telegram_client, SwapListener.TelegramClientImpl)
+  @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle(chat_id, args, state) do
     case args do
