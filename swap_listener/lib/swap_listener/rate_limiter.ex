@@ -36,6 +36,11 @@ defmodule SwapListener.RateLimiter do
     GenServer.cast(__MODULE__, {:schedule_send_photo, chat_id, photo_url, caption})
   end
 
+  def clear_messages_for_chat(chat_id) do
+    Logger.debug("Clearing messages for chat_id: #{chat_id}")
+    GenServer.cast(__MODULE__, {:clear_messages_for_chat, chat_id})
+  end
+
   def handle_cast({:schedule_send_message, chat_id, text}, %{queue: queue} = state) do
     Logger.debug("Handling cast for send_message")
     updated_queue = :queue.in({:message, chat_id, text}, queue)
@@ -48,15 +53,20 @@ defmodule SwapListener.RateLimiter do
     {:noreply, %{state | queue: updated_queue}}
   end
 
-  defp adjust_throttle(throttle_level, queue) do
-    new_throttle_level = min(throttle_level + 1, length(@min_buy_amount_levels) - 1)
-    new_min_buy_amount = Enum.at(@min_buy_amount_levels, new_throttle_level)
-    Logger.warning("Throttle level increased to #{new_throttle_level}, adjusting min_buy_amount to #{new_min_buy_amount}")
+  def handle_cast({:clear_messages_for_chat, chat_id}, %{queue: queue} = state) do
+    Logger.debug("Clearing messages for chat_id: #{chat_id}")
 
-    notify_users_of_adjustment(new_min_buy_amount)
-    Repo.transaction(fn -> adjust_min_buy_amount_for_all_subscriptions(new_min_buy_amount) end)
+    updated_queue =
+      :queue.filter(
+        fn
+          {:message, ^chat_id, _} -> false
+          {:photo, ^chat_id, _, _} -> false
+          _ -> true
+        end,
+        queue
+      )
 
-    {queue, 0, new_throttle_level}
+    {:noreply, %{state | queue: updated_queue}}
   end
 
   def handle_info(:check_queue, %{queue: queue, messages_sent: messages_sent, throttle_level: throttle_level} = state) do
@@ -112,6 +122,17 @@ defmodule SwapListener.RateLimiter do
       end)
 
     {new_queue, new_messages_sent, throttle_level}
+  end
+
+  defp adjust_throttle(throttle_level, queue) do
+    new_throttle_level = min(throttle_level + 1, length(@min_buy_amount_levels) - 1)
+    new_min_buy_amount = Enum.at(@min_buy_amount_levels, new_throttle_level)
+    Logger.warning("Throttle level increased to #{new_throttle_level}, adjusting min_buy_amount to #{new_min_buy_amount}")
+
+    notify_users_of_adjustment(new_min_buy_amount)
+    Repo.transaction(fn -> adjust_min_buy_amount_for_all_subscriptions(new_min_buy_amount) end)
+
+    {queue, 0, new_throttle_level}
   end
 
   defp adjust_min_buy_amount_for_all_subscriptions(new_min_buy_amount) do

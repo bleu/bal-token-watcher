@@ -17,11 +17,7 @@ defmodule SwapListener.CommandHandler.Main do
   @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle_command(command, chat_id, args, state) do
-    if String.starts_with?(command, "/") do
-      handle_slash_command(command, chat_id, args, state)
-    else
-      handle_step_command(command, chat_id, args, state)
-    end
+    handle_slash_command(command, chat_id, args, state)
   end
 
   defp handle_slash_command("/start", chat_id, args, state), do: Start.handle(chat_id, args, state)
@@ -60,7 +56,7 @@ defmodule SwapListener.CommandHandler.Main do
     {state, nil}
   end
 
-  defp handle_step_command(command, chat_id, _, state) do
+  def handle_step(command, chat_id, state) do
     case state[:step] do
       :chain_id ->
         chain_id = command

@@ -5,6 +5,7 @@ defmodule SwapListener.TelegramBot do
   alias SwapListener.AllowList
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler
+  alias SwapListener.RateLimiter
   alias SwapListener.TelegramClientImpl
 
   require Logger
@@ -44,6 +45,7 @@ defmodule SwapListener.TelegramBot do
         %{"left_chat_member" => %{"id" => _bot_id, "is_bot" => true}, "chat" => %{"id" => chat_id}} ->
           Logger.info("Bot removed from chat: #{chat_id}, archiving subscriptions")
           ChatSubscriptionManager.archive_subscriptions(chat_id)
+          RateLimiter.clear_messages_for_chat(chat_id)
           {state, nil}
 
         _ ->
@@ -86,9 +88,18 @@ defmodule SwapListener.TelegramBot do
 
   defp handle_message(%{"text" => text, "chat" => %{"id" => chat_id}}, state) do
     Logger.debug("Received message: #{text} from chat: #{chat_id}")
-    [command | args] = String.split(text)
 
-    CommandHandler.Main.handle_command(command, chat_id, args, state)
+    if String.starts_with?(text, "/") do
+      [command | args] = String.split(text)
+      CommandHandler.Main.handle_command(command, chat_id, args, state)
+    else
+      if state[:step] do
+        CommandHandler.Main.handle_step(text, chat_id, state)
+      else
+        Logger.debug("Ignoring non-command message")
+        {state, nil}
+      end
+    end
   end
 
   defp handle_message(message, state) do

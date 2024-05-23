@@ -69,12 +69,13 @@ defmodule SwapListener.CommandHandler.Settings do
   end
 
   defp valid_settings_args?(args) do
-    required_keys = ["min_buy_amount", "trade_size_step", "alert_image_url"]
+    allowed_keys = ["min_buy_amount", "trade_size_step", "alert_image_url"]
 
-    Enum.all?(required_keys, fn key ->
-      Enum.any?(args, fn arg ->
-        String.starts_with?(arg, key <> ":")
-      end)
+    Enum.all?(args, fn arg ->
+      case String.split(arg, ":") do
+        [key, _value] -> key in allowed_keys
+        _ -> false
+      end
     end)
   end
 
