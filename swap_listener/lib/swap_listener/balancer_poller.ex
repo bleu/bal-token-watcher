@@ -116,13 +116,15 @@ defmodule SwapListener.BalancerPoller do
   end
 
   defp store_dexscreener_url(pair_address, token_in, token_out, chain_id, url) do
-    Repo.insert(%DexscreenerCache{
+    changeset = %DexscreenerCache{
       id: pair_address,
       token_in: token_in,
       token_out: token_out,
       chain_id: chain_id,
       dexscreener_url: url
-    })
+    }
+
+    Repo.insert(changeset, on_conflict: :nothing, conflict_target: [:id])
 
     url
   end

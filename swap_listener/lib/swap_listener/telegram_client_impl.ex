@@ -2,6 +2,8 @@ defmodule SwapListener.TelegramClientImpl do
   @moduledoc false
   @behaviour SwapListener.TelegramClient
 
+  alias SwapListener.ChatSubscriptionManager
+
   require Logger
 
   @doc """
@@ -19,6 +21,11 @@ defmodule SwapListener.TelegramClientImpl do
       {:ok, response} ->
         Logger.debug("Message sent successfully to #{chat_id}. Response: #{inspect(response)}")
         :ok
+
+      {:error, %{"description" => "Forbidden: bot was kicked from the group chat"}} ->
+        Logger.error("Failed to send message to #{chat_id}: bot was kicked from the group chat")
+        ChatSubscriptionManager.archive_subscriptions(chat_id)
+        {:error, :bot_kicked}
 
       {:error, error} ->
         Logger.error("Failed to send message to #{chat_id}: #{inspect(error)}")
@@ -46,6 +53,11 @@ defmodule SwapListener.TelegramClientImpl do
       {:ok, response} ->
         Logger.debug("Photo sent successfully to #{chat_id}. Response: #{inspect(response)}")
         :ok
+
+      {:error, %{"description" => "Forbidden: bot was kicked from the group chat"}} ->
+        Logger.error("Failed to send photo to #{chat_id}: bot was kicked from the group chat")
+        ChatSubscriptionManager.archive_subscriptions(chat_id)
+        {:error, :bot_kicked}
 
       {:error, error} ->
         Logger.error("Failed to send photo to #{chat_id}: #{inspect(error)}")

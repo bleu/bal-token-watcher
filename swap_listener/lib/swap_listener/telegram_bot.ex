@@ -3,6 +3,7 @@ defmodule SwapListener.TelegramBot do
   use Telegram.ChatBot
 
   alias SwapListener.AllowList
+  alias SwapListener.ChatSubscriptionManager
   alias SwapListener.CommandHandler
   alias SwapListener.TelegramClientImpl
 
@@ -39,6 +40,11 @@ defmodule SwapListener.TelegramBot do
 
         %{"edited_message" => message} ->
           handle_message(message, state)
+
+        %{"left_chat_member" => %{"id" => _bot_id, "is_bot" => true}, "chat" => %{"id" => chat_id}} ->
+          Logger.info("Bot removed from chat: #{chat_id}, archiving subscriptions")
+          ChatSubscriptionManager.archive_subscriptions(chat_id)
+          {state, nil}
 
         _ ->
           Logger.info("Unhandled message type")

@@ -19,10 +19,18 @@ defmodule SwapListener.ChatSubscriptionManager do
     {:ok, %{}}
   end
 
+  def archive_subscriptions(chat_id) do
+    Logger.info("Archiving all subscriptions for chat: #{chat_id}")
+
+    Repo.transaction(fn ->
+      Repo.update_all(from(c in ChatSubscription, where: c.chat_id == ^chat_id), set: [archived_at: DateTime.utc_now()])
+    end)
+  end
+
   def list_subscriptions(chat_id) do
     query =
       from(c in ChatSubscription,
-        where: c.chat_id == ^chat_id,
+        where: c.chat_id == ^chat_id and is_nil(c.archived_at),
         order_by: [asc: c.chain_id, asc: c.token_address],
         select: %{
           chat_id: c.chat_id,
@@ -47,6 +55,7 @@ defmodule SwapListener.ChatSubscriptionManager do
   def list_subscriptions do
     query =
       from(c in ChatSubscription,
+        where: is_nil(c.archived_at),
         select: %{
           chat_id: c.chat_id,
           chain_id: c.chain_id,

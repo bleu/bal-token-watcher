@@ -31,7 +31,10 @@ defmodule SwapListener.DexscreenerClient do
          {:ok, %{"pairs" => pairs}} <- Jason.decode(body) do
       chain_id_str = get_dexscreener_chain_id(chain_id)
       pair = Enum.find(pairs, fn pair -> pair["chainId"] == chain_id_str and pair["dexId"] == "balancer" end)
-      [pair["pairAddress"], pair["url"]]
+
+      Logger.info("Found pair for #{token_in}/#{token_out} on chain #{chain_id}: #{inspect(pair)}")
+
+      (pair && [pair["pairAddress"], pair["url"]]) || nil
     else
       {:error, %HTTPoison.Error{reason: reason}} ->
         Logger.error("Failed to fetch URL: #{url}. Reason: #{inspect(reason)}")

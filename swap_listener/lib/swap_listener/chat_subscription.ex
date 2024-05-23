@@ -17,6 +17,7 @@ defmodule SwapListener.ChatSubscription do
     field :discord_link, :string
     field :telegram_link, :string
     field :paused, :boolean, default: false
+    field :archived_at, :utc_datetime
 
     timestamps()
   end
@@ -36,7 +37,8 @@ defmodule SwapListener.ChatSubscription do
       :twitter_handle,
       :discord_link,
       :telegram_link,
-      :paused
+      :paused,
+      :archived_at
     ])
     |> validate_required([
       :chat_id,

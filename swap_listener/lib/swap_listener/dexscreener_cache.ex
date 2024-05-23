@@ -19,5 +19,6 @@ defmodule SwapListener.DexscreenerCache do
     cache
     |> cast(attrs, [:id, :dexscreener_url, :chain_id])
     |> validate_required([:id, :dexscreener_url, :chain_id])
+    |> unique_constraint(:id, name: :dexscreener_cache_pkey)
   end
 end
