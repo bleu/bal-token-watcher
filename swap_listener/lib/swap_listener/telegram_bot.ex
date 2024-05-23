@@ -58,6 +58,6 @@ defmodule SwapListener.TelegramBot do
     Logger.debug("Received message: #{text} from chat: #{chat_id}")
     [command | args] = String.split(text)
 
-    CommandHandler.handle_command(command, chat_id, args, state)
+    CommandHandler.Main.handle_command(command, chat_id, args, state)
   end
 end

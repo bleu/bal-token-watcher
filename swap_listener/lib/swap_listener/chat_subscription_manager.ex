@@ -178,6 +178,22 @@ defmodule SwapListener.ChatSubscriptionManager do
   end
 
   def pause(chat_id, token_address, chain_id) do
+    update_pause_status(chat_id, token_address, chain_id, true, "paused")
+  end
+
+  def pause_all(chat_id) do
+    update_pause_status_all(chat_id, true, "paused")
+  end
+
+  def restart(chat_id, token_address, chain_id) do
+    update_pause_status(chat_id, token_address, chain_id, false, "restarted")
+  end
+
+  def restart_all(chat_id) do
+    update_pause_status_all(chat_id, false, "restarted")
+  end
+
+  defp update_pause_status(chat_id, token_address, chain_id, status, action) do
     query =
       from(c in ChatSubscription,
         where: c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id
@@ -188,38 +204,38 @@ defmodule SwapListener.ChatSubscriptionManager do
         handle_db_response({:error, nil}, chat_id, "No subscription found for #{token_address} on chain #{chain_id}.")
 
       subscription ->
-        changeset = ChatSubscription.changeset(subscription, %{paused: true})
+        changeset = ChatSubscription.changeset(subscription, %{paused: status})
 
         case Repo.update(changeset) do
           {:ok, _subscription} ->
-            handle_db_response({:ok, nil}, chat_id, "Alerts paused for #{token_address} on chain #{chain_id}.")
+            handle_db_response({:ok, nil}, chat_id, "Alerts #{action} for #{token_address} on chain #{chain_id}.")
 
           {:error, changeset} ->
-            Logger.debug("Failed to pause alerts for chat_id: #{chat_id}")
-            Logger.debug("Changeset errors: #{inspect(changeset.errors)}")
-            handle_db_response({:error, changeset}, chat_id, "Failed to pause alerts.")
+            Logger.info("Failed to insert/update subscription for chat_id: #{chat_id}")
+            Logger.info("Changeset errors: #{inspect(changeset.errors)}")
+            handle_db_response({:error, changeset}, chat_id, "Failed to #{action} alerts.")
         end
     end
   end
 
-  def pause_all(chat_id) do
+  defp update_pause_status_all(chat_id, status, action) do
     query = from(c in ChatSubscription, where: c.chat_id == ^chat_id)
 
     subscriptions = Repo.all(query)
 
     if Enum.empty?(subscriptions) do
-      handle_db_response({:ok, nil}, chat_id, "No subscriptions found to pause.")
+      handle_db_response({:ok, nil}, chat_id, "No subscriptions found to #{action}.")
     else
       results =
         Enum.map(subscriptions, fn subscription ->
-          changeset = ChatSubscription.changeset(subscription, %{paused: true})
+          changeset = ChatSubscription.changeset(subscription, %{paused: status})
           Repo.update(changeset)
         end)
 
       if Enum.all?(results, &match?({:ok, _}, &1)) do
-        handle_db_response({:ok, nil}, chat_id, "All alerts paused.")
+        handle_db_response({:ok, nil}, chat_id, "All alerts #{action}.")
       else
-        Logger.debug("Failed to pause some alerts for chat_id: #{chat_id}")
+        Logger.debug("Failed to #{action} some alerts for chat_id: #{chat_id}")
 
         Enum.each(results, fn
           {:error, changeset} ->
@@ -229,7 +245,7 @@ defmodule SwapListener.ChatSubscriptionManager do
             :ok
         end)
 
-        handle_db_response({:error, nil}, chat_id, "Failed to pause some alerts.")
+        handle_db_response({:error, nil}, chat_id, "Failed to #{action} some alerts.")
       end
     end
   end
