@@ -47,7 +47,7 @@ defmodule SwapListener.BalancerPoller do
   end
 
   defp poll_balancer_subgraph(url, chain_id) do
-    latest_timestamp = get_latest_timestamp(chain_id) || DateTime.to_unix(DateTime.utc_now()) - 60
+    latest_timestamp = get_latest_timestamp(chain_id) || DateTime.to_unix(DateTime.utc_now()) - 10
 
     query = """
     query ($latestTimestamp: Int!) {

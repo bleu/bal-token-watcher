@@ -27,7 +27,6 @@ defmodule SwapListener.Application do
   defp poller_children do
     if Mix.env() != :test do
       Enum.map(BlockchainConfig.subgraph_urls(), &poller_child_spec/1)
-      []
     else
       []
     end
