@@ -228,8 +228,8 @@ defmodule SwapListener.CommandHandler do
         if valid_token_address?(token_address) do
           new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :alert_image_url)
 
-          token_name = get_token_name(token_address)
-          confirmation_message = "You have selected the token: #{token_name} (#{token_address})."
+          token_sym = get_token_sym(token_address)
+          confirmation_message = "You have selected the token: #{token_sym} (#{token_address})."
 
           reply = %{chat_id: chat_id, text: "#{confirmation_message}\nPlease enter the alert image URL:"}
           {new_state, reply}
@@ -404,7 +404,7 @@ defmodule SwapListener.CommandHandler do
   end
 
   def format_subscription_list(subscriptions) do
-    headers = ["Chain", "Token Address", "Status"]
+    headers = ["Chain", "TokenAddr (Symbol)", "Status"]
 
     # Calculate the maximum width for each column
     column_widths = calculate_column_widths(headers, subscriptions)
@@ -436,7 +436,7 @@ defmodule SwapListener.CommandHandler do
     Enum.reduce(subscriptions, initial_widths, fn subscription, acc ->
       [
         max(String.length(BlockchainConfig.get_chain_label(subscription.chain_id)), Enum.at(acc, 0)),
-        max(String.length(truncate_address(subscription.token_address)), Enum.at(acc, 1)),
+        max(String.length(get_token_sym(subscription.token_address)), Enum.at(acc, 1)),
         max(String.length(if subscription.paused, do: "Paused", else: "Active"), Enum.at(acc, 2))
       ]
     end)
@@ -453,11 +453,11 @@ defmodule SwapListener.CommandHandler do
 
   defp format_separator(widths) do
     separator =
-      Enum.map_join(widths, "|", fn width ->
+      Enum.map_join(widths, "+", fn width ->
         String.duplicate("-", width + 2)
       end)
 
-    "|-" <> separator <> "-|"
+    "+" <> separator <> "+"
   end
 
   defp format_subscription(%{token_address: token_address, chain_id: chain_id, paused: paused}, widths) do
@@ -465,7 +465,7 @@ defmodule SwapListener.CommandHandler do
 
     values = [
       BlockchainConfig.get_chain_label(chain_id),
-      truncate_address(token_address),
+      get_token_sym(token_address),
       status
     ]
 
@@ -473,15 +473,32 @@ defmodule SwapListener.CommandHandler do
   end
 
   defp pad_right(string, length) do
-    string <> String.duplicate(" ", length - String.length(string))
+    padding_length = max(length - String.length(string), 0)
+    string <> String.duplicate(" ", padding_length)
   end
 
   defp truncate_address(address) do
     String.slice(address, 0..5) <> "..." <> String.slice(address, -4..-1)
   end
 
-  defp get_token_name(token_address) do
-    Repo.one(from(s in BalancerSwap, where: s.token_in == ^token_address, select: s.token_in_name)) ||
-      Repo.one(from(s in BalancerSwap, where: s.token_out == ^token_address, select: s.token_out_name)) || ""
+  defp get_token_sym(token_address) do
+    query =
+      from(s in BalancerSwap,
+        where: s.token_in == ^token_address or s.token_out == ^token_address,
+        select: %{
+          token_in_sym: s.token_in_sym,
+          token_out_sym: s.token_out_sym,
+          token_in: s.token_in,
+          token_out: s.token_out
+        },
+        limit: 1
+      )
+
+    case Repo.one(query) do
+      nil -> ""
+      %{token_in: ^token_address, token_in_sym: token_symbol} -> "#{truncate_address(token_address)} (#{token_symbol})"
+      %{token_out: ^token_address, token_out_sym: token_symbol} -> "#{truncate_address(token_address)} (#{token_symbol})"
+      _ -> ""
+    end
   end
 end

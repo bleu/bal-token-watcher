@@ -23,11 +23,7 @@ defmodule SwapListener.Application do
   end
 
   defp env_specific_children do
-    if Mix.env() == :prod do
-      [{Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}]
-    else
-      []
-    end
+    [{Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}]
   end
 
   defp poller_children do

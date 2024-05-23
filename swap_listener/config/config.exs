@@ -9,9 +9,11 @@ config :honeybadger,
 
 config :telegram,
   webserver: Telegram.WebServer.Cowboy,
-  token: System.get_env("TELEGRAM_TOKEN"),
+  token: "7018925703:AAHy4IExdHx7qiRcOsdmOoHKTu3IJjsMmv8",
+  # token: System.get_env("TELEGRAM_TOKEN"),
   webhook: [
-    host: System.get_env("TELEGRAM_WEBHOOK_HOST"),
+    # host: System.get_env("TELEGRAM_WEBHOOK_HOST"),
+    host: "c229ef561716.ngrok.app",
     port: 443,
     local_port: 4000,
     max_connections: 40
@@ -35,6 +37,6 @@ config :esbuild,
 config :tailwind,
   version: "3.2.7"
 
-config :logger, level: :debug
+config :logger, level: :info
 
 import_config "#{config_env()}.exs"
