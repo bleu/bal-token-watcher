@@ -134,14 +134,20 @@ defmodule SwapListener.NotificationService do
 
   defp format_message(details, subscription) do
     token_out_in_usd = Decimal.div(details.value_usd, details.token_amount_out)
-    dexscreener_url = format_link("DEX Screener", details.dexscreener_url)
+    dexscreener_link = format_link("DEX Screener", details.dexscreener_url)
+
+    to_append =
+      case dexscreener_link do
+        "" -> ""
+        _ -> " | #{dexscreener_link}"
+      end
 
     """
     *#{details.token_out_sym} PURCHASED!*
     Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
     Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
     Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
-    [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})#{" | " <> dexscreener_url(if(dexscreener_url != ""))}
+    [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})#{to_append}
     #{format_links(subscription)}
     """
   end
