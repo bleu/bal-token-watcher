@@ -1,7 +1,7 @@
 defmodule SwapListener.AllowList do
   @moduledoc false
 
-  @allowed_users ["allowed_user1", "allowed_user2", "rpunktj"]
+  @allowed_users []
 
   def allowed?(username) do
     username in @allowed_users

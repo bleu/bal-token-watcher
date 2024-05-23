@@ -17,17 +17,10 @@ defmodule SwapListener.CommandHandler.Main do
   @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle_command(command, chat_id, args, state) do
-    Logger.debug("Received command: #{command} with args: #{inspect(args)}")
-
-    cond do
-      String.starts_with?(command, "/") ->
-        handle_slash_command(command, chat_id, args, state)
-
-      !is_nil(state[:step]) ->
-        handle_step_command(command, chat_id, args, state)
-
-      true ->
-        {state, nil}
+    if String.starts_with?(command, "/") do
+      handle_slash_command(command, chat_id, args, state)
+    else
+      handle_step_command(command, chat_id, args, state)
     end
   end
 

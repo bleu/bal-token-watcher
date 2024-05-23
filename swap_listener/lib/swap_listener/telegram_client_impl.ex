@@ -75,4 +75,19 @@ defmodule SwapListener.TelegramClientImpl do
         {:error, error}
     end
   end
+
+  def leave_chat(chat_id) do
+    token = Application.fetch_env!(:telegram, :token)
+    Logger.debug("Leaving chat: #{chat_id}")
+
+    case Telegram.Api.request(token, "leaveChat", chat_id: chat_id) do
+      {:ok, response} ->
+        Logger.debug("Left chat successfully: #{chat_id}. Response: #{inspect(response)}")
+        :ok
+
+      {:error, error} ->
+        Logger.error("Failed to leave chat: #{chat_id}. Error: #{inspect(error)}")
+        {:error, error}
+    end
+  end
 end

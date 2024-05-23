@@ -101,7 +101,7 @@ defmodule SwapListener.ChatSubscriptionManagerTest do
       ChatSubscriptionManager.unsubscribe(chat_id, token_address, chain_id)
 
       subscriptions = Repo.all(ChatSubscription)
-      assert length(subscriptions) == 0
+      assert Enum.empty?(subscriptions)
     end
 
     test "sends a message when no subscriptions found" do
@@ -114,7 +114,7 @@ defmodule SwapListener.ChatSubscriptionManagerTest do
       ChatSubscriptionManager.unsubscribe(chat_id, token_address, chain_id)
 
       subscriptions = Repo.all(ChatSubscription)
-      assert length(subscriptions) == 0
+      assert Enum.empty?(subscriptions)
     end
   end
 
@@ -157,7 +157,7 @@ defmodule SwapListener.ChatSubscriptionManagerTest do
       ChatSubscriptionManager.unsubscribe(chat_id)
 
       subscriptions = Repo.all(ChatSubscription)
-      assert length(subscriptions) == 0
+      assert Enum.empty?(subscriptions)
     end
 
     test "sends a message when no subscriptions found" do
@@ -168,7 +168,7 @@ defmodule SwapListener.ChatSubscriptionManagerTest do
       ChatSubscriptionManager.unsubscribe(chat_id)
 
       subscriptions = Repo.all(ChatSubscription)
-      assert length(subscriptions) == 0
+      assert Enum.empty?(subscriptions)
     end
   end
 

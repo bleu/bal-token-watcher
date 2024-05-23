@@ -4,6 +4,7 @@ defmodule SwapListener.TelegramBot do
 
   alias SwapListener.AllowList
   alias SwapListener.CommandHandler
+  alias SwapListener.TelegramClientImpl
 
   require Logger
 
@@ -70,7 +71,8 @@ defmodule SwapListener.TelegramBot do
       Logger.info("Sent hello message to #{new_member["username"]}")
     else
       Logger.warning("User #{from_username} is not allowed to add members")
-      # TODO: leave group
+      TelegramClientImpl.send_message(chat_id, "Sorry, I'm not allowed to be added by you.")
+      TelegramClientImpl.leave_chat(chat_id)
     end
 
     {state, nil}
