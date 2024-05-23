@@ -105,27 +105,10 @@ defmodule SwapListener.BalancerPoller do
   defp get_or_fetch_dexscreener_url(chain_id, token_in, token_out) do
     case Repo.get_by(DexscreenerCache, token_in: token_in, token_out: token_out, chain_id: chain_id) do
       nil ->
-        case DexscreenerClient.get_dexscreener_url(chain_id, token_in, token_out) do
-          nil -> nil
-          [pair_address, url] -> store_dexscreener_url(pair_address, token_in, token_out, chain_id, url)
-        end
+        nil
 
       %DexscreenerCache{dexscreener_url: url} ->
         url
     end
-  end
-
-  defp store_dexscreener_url(pair_address, token_in, token_out, chain_id, url) do
-    changeset = %DexscreenerCache{
-      id: pair_address,
-      token_in: token_in,
-      token_out: token_out,
-      chain_id: chain_id,
-      dexscreener_url: url
-    }
-
-    Repo.insert(changeset, on_conflict: :nothing, conflict_target: [:id])
-
-    url
   end
 end

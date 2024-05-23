@@ -3,6 +3,7 @@ defmodule SwapListener.NotificationService do
 
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
+  alias SwapListener.DexscreenerUrlManager
 
   require Decimal
   require Logger
@@ -87,16 +88,9 @@ defmodule SwapListener.NotificationService do
   defp broadcast_to_subscribers(details) do
     case ChatSubscriptionManager.list_subscriptions() do
       subscriptions when is_list(subscriptions) ->
-        Logger.debug("Found subscriptions: #{inspect(subscriptions)}")
-
         Enum.each(subscriptions, fn subscription ->
-          Logger.debug("Broadcasting to chat_id: #{subscription.chat_id} \
-                        with settings: #{inspect(subscription)} \
-                        and details: #{inspect(details)}")
-
           if should_notify?(details, subscription) do
-            Logger.info("Subscription criteria matched: #{inspect(subscription)}, #{inspect(details)}")
-            @telegram_client.send_message(subscription.chat_id, format_message(details, subscription))
+            send_message(subscription, details)
           else
             Logger.debug("Notification does not match subscription criteria: #{inspect(subscription)}")
           end

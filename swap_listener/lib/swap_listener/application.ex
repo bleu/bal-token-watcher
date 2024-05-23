@@ -1,5 +1,27 @@
 defmodule SwapListener.Application do
-  @moduledoc false
+  @moduledoc """
+  The `SwapListener.Application` module is the entry point of the SwapListener application.
+  It starts and supervises the main processes required for the application to function.
+
+  This module defines the application's supervision tree and starts various child processes,
+  ensuring they are monitored and restarted if they fail. The supervisor strategy used is
+  `:one_for_one`, meaning if a child process terminates, only that process is restarted.
+
+  The application starts the following child processes:
+  - `SwapListener.Repo`: Manages database interactions.
+  - `Phoenix.PubSub`: Provides a publish-subscribe system for message broadcasting.
+  - `SwapListener.SwapListener`: Listens for swap events and processes them.
+  - `SwapListener.TokenAdditionManager`: Manages the addition of new tokens.
+  - `SwapListener.ChatSubscriptionManager`: Manages chat subscriptions for swap notifications.
+  - `SwapListener.RateLimiter`: Manages rate limiting for Telegram bot interactions.
+  - `Telegram.Webhook`: Manages Telegram webhook integration for bot commands.
+
+  Additionally, if the environment is not `:test`, it starts poller processes for each subgraph URL
+  defined in `BlockchainConfig.subgraph_urls/1`, using the `SwapListener.BalancerPoller` module.
+
+  The `set_telegram_commands` function sets up commands for the Telegram bot using the
+  `TelegramClientImpl`, ensuring the bot responds to user commands appropriately.
+  """
   use Application
 
   alias SwapListener.BlockchainConfig
@@ -23,7 +45,9 @@ defmodule SwapListener.Application do
       {SwapListener.TokenAdditionManager, []},
       SwapListener.ChatSubscriptionManager,
       {SwapListener.RateLimiter, []},
-      {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
+      {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]},
+      # Add the new manager here
+      {SwapListener.DexscreenerUrlManager, []}
     ]
   end
 

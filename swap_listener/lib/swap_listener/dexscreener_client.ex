@@ -17,6 +17,9 @@ defmodule SwapListener.DexscreenerClient do
     8453 => "base"
   }
 
+  @max_retries 5
+  @initial_backoff 500
+
   defp get_dexscreener_chain_id(chain_id) do
     Map.get(@dexscreener_chain_id_map, chain_id, fn ->
       Logger.warning("No chain ID mapping found for chain ID #{chain_id}")
@@ -26,30 +29,40 @@ defmodule SwapListener.DexscreenerClient do
 
   def get_dexscreener_url(chain_id, token_in, token_out) do
     url = "#{@api_url}?q=#{token_in}%20#{token_out}"
+    fetch_with_retries(url, chain_id, token_in, token_out, @max_retries, @initial_backoff)
+  end
 
-    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(url),
-         {:ok, %{"pairs" => pairs}} <- Jason.decode(body) do
-      chain_id_str = get_dexscreener_chain_id(chain_id)
-      pair = Enum.find(pairs, fn pair -> pair["chainId"] == chain_id_str and pair["dexId"] == "balancer" end)
+  defp fetch_with_retries(_url, _chain_id, _token_in, _token_out, 0, _backoff) do
+    Logger.error("Max retries reached, failing")
+    nil
+  end
 
-      Logger.info("Found pair for #{token_in}/#{token_out} on chain #{chain_id}: #{inspect(pair)}")
+  defp fetch_with_retries(url, chain_id, token_in, token_out, retries, backoff) do
+    case HTTPoison.get(url) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, %{"pairs" => pairs}} ->
+            chain_id_str = get_dexscreener_chain_id(chain_id)
+            pair = Enum.find(pairs, fn pair -> pair["chainId"] == chain_id_str and pair["dexId"] == "balancer" end)
 
-      (pair && [pair["pairAddress"], pair["url"]]) || nil
-    else
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("Failed to fetch URL: #{url}. Reason: #{inspect(reason)}")
-        nil
+            (pair && [pair["pairAddress"], pair["url"]]) || nil
+
+          {:error, reason} ->
+            Logger.error("Failed to decode response: #{inspect(reason)}")
+            nil
+        end
+
+      {:ok, %HTTPoison.Response{status_code: 429}} ->
+        Logger.warning("Received 429 Too Many Requests. Retrying in #{backoff} ms...")
+        :timer.sleep(backoff)
+        fetch_with_retries(url, chain_id, token_in, token_out, retries - 1, backoff * 2)
 
       {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
         Logger.error("Failed to fetch URL: #{url}. Status code: #{status_code}. Body: #{body}")
         nil
 
-      {:error, reason} ->
-        Logger.error("Failed to decode response: #{inspect(reason)}")
-        nil
-
-      nil ->
-        Logger.warning("No pair found for #{token_in}/#{token_out} on chain #{chain_id}")
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        Logger.error("Failed to fetch URL: #{url}. Reason: #{inspect(reason)}")
         nil
     end
   end
