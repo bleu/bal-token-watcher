@@ -34,12 +34,12 @@ defmodule SwapListener.CommandHandler.Main do
   defp handle_slash_command("/start", chat_id, args, state), do: Start.handle(chat_id, args, state)
   defp handle_slash_command("/subscribe", chat_id, args, state), do: Subscribe.handle(chat_id, args, state)
   defp handle_slash_command("/unsubscribe", chat_id, args, state), do: Unsubscribe.handle(chat_id, args, state)
-  defp handle_slash_command("/unsubscribeAll", chat_id, args, state), do: Unsubscribe.handle_all(chat_id, args, state)
+  defp handle_slash_command("/unsubscribeall", chat_id, args, state), do: Unsubscribe.handle_all(chat_id, args, state)
   defp handle_slash_command("/settings", chat_id, args, state), do: Settings.handle(chat_id, args, state)
   defp handle_slash_command("/pause", chat_id, args, state), do: Pause.handle(chat_id, args, state)
-  defp handle_slash_command("/pauseAll", chat_id, args, state), do: Pause.handle_all(chat_id, args, state)
+  defp handle_slash_command("/pauseall", chat_id, args, state), do: Pause.handle_all(chat_id, args, state)
   defp handle_slash_command("/restart", chat_id, args, state), do: Restart.handle(chat_id, args, state)
-  defp handle_slash_command("/restartAll", chat_id, args, state), do: Restart.handle_all(chat_id, args, state)
+  defp handle_slash_command("/restartall", chat_id, args, state), do: Restart.handle_all(chat_id, args, state)
   defp handle_slash_command("/help", chat_id, args, state), do: Help.handle(chat_id, args, state)
 
   defp handle_slash_command("/subscriptions", chat_id, _args, state) do
@@ -47,7 +47,7 @@ defmodule SwapListener.CommandHandler.Main do
     {state, nil}
   end
 
-  defp handle_slash_command("/addToken", chat_id, _args, state) do
+  defp handle_slash_command("/addtoken", chat_id, _args, state) do
     state = Map.put(state, :step, :chain_id)
 
     reply = %{chat_id: chat_id, text: "Please select the chain:#{CommandHandlerHelper.available_chains_text()}"}

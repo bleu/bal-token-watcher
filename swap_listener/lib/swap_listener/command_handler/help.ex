@@ -17,7 +17,7 @@ defmodule SwapListener.CommandHandler.Help do
     `/unsubscribe [token_address] [chain_id]` - Unsubscribe from alerts for a specific token on a specified chain.
     *Example:* `/unsubscribe 0xTokenAddress 1`
     """,
-    "/unsubscribeAll" => "*Unsubscribe from All Token Alerts.*",
+    "/unsubscribeall" => "*Unsubscribe from All Token Alerts.*",
     "/subscriptions" => "*List Your Current Subscriptions.* Shows all tokens you are tracking and their settings.",
     "/settings" => """
     *Update Bot Settings*
@@ -31,16 +31,16 @@ defmodule SwapListener.CommandHandler.Help do
     `/pause [token_address] [chain_id]` - Pause alerts for a specific token on a specified chain.
     *Example:* `/pause 0xTokenAddress 1`
     """,
-    "/pauseAll" => "*Pause All Token Alerts.*",
+    "/pauseall" => "*Pause All Token Alerts.*",
     "/restart" => """
     *Restart Alerts for a Specific Token*
     `/restart [token_address] [chain_id]` - Restart alerts for a specific token on a specified chain.
     *Example:* `/restart 0xTokenAddress 1`
     """,
-    "/restartAll" => "*Restart All Paused Alerts.*",
-    "/addToken" => """
+    "/restartall" => "*Restart All Paused Alerts.*",
+    "/addtoken" => """
     *Add a New Token for Buy Alerts*
-    `/addToken` - Begin the process to add a new token. You will be prompted to enter the chain ID, token address, and configure settings.
+    `/addtoken` - Begin the process to add a new token. You will be prompted to enter the chain ID, token address, and configure settings.
     """,
     "/help" =>
       "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
@@ -81,7 +81,7 @@ defmodule SwapListener.CommandHandler.Help do
     message = """
     *Welcome to the Balancer Buy Bot!* Here’s how you can interact with me:
 
-    - *`/addToken`*: Start the process to add a new token for buy alerts. Follow the prompts to configure settings for the token.
+    - *`/addtoken`*: Start the process to add a new token for buy alerts. Follow the prompts to configure settings for the token.
     - *`/subscribe [token_address] [chain_id]`*: Subscribe to buy alerts for a specific token. Specify the token address and the chain.
     - *`/unsubscribe [token_address] [chain_id]`*: Unsubscribe from alerts for a specific token on a specified chain.
     - *`/unsubscribeAll`*: Unsubscribe from all alerts.

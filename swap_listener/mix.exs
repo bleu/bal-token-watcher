@@ -61,7 +61,8 @@ defmodule SwapListener.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:styler, "~> 0.11", only: [:dev, :test], runtime: false},
       {:plug_cowboy, "~> 2.5"},
-      {:ex_machina, "~> 2.7"}
+      {:ex_machina, "~> 2.7"},
+      {:decimal, "~> 2.0"}
     ]
   end
 

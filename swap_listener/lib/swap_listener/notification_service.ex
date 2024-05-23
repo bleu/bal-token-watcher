@@ -4,6 +4,7 @@ defmodule SwapListener.NotificationService do
   alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
 
+  require Decimal
   require Logger
 
   @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
@@ -94,6 +95,7 @@ defmodule SwapListener.NotificationService do
                         and details: #{inspect(details)}")
 
           if should_notify?(details, subscription) do
+            Logger.info("Subscription criteria matched: #{inspect(subscription)}, #{inspect(details)}")
             @telegram_client.send_message(subscription.chat_id, format_message(details, subscription))
           else
             Logger.debug("Notification does not match subscription criteria: #{inspect(subscription)}")
@@ -110,8 +112,24 @@ defmodule SwapListener.NotificationService do
 
   defp should_notify?(details, subscription) do
     subscription.paused == false &&
-      details.chain_id == subscription.chain_id &&
-      details.token_out == subscription.token_address && details.token_amount_out >= subscription.min_buy_amount
+      same_token?(details, subscription) &&
+      token_out_larger_than_min_buy_amount?(details, subscription)
+  end
+
+  defp same_token?(details, subscription) do
+    details.token_out == subscription.token_address &&
+      details.chain_id == subscription.chain_id
+  end
+
+  defp token_out_larger_than_min_buy_amount?(details, subscription) do
+    token_amount_out = Decimal.new(Kernel.to_string(details.token_amount_out))
+    min_buy_amount = Decimal.new(Kernel.to_string(subscription.min_buy_amount))
+
+    case Decimal.compare(token_amount_out, min_buy_amount) do
+      :gt -> true
+      :eq -> true
+      _ -> false
+    end
   end
 
   defp format_message(details, subscription) do

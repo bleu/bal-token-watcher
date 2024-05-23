@@ -3,12 +3,15 @@ defmodule SwapListener.Application do
   use Application
 
   alias SwapListener.BlockchainConfig
+  alias SwapListener.TelegramBotSetupHelper
+  alias SwapListener.TelegramClientImpl
 
   def start(_type, _args) do
     children = default_children() ++ poller_children()
 
     opts = [strategy: :one_for_one, name: SwapListener.Supervisor]
 
+    set_telegram_commands()
     Supervisor.start_link(children, opts)
   end
 
@@ -43,5 +46,16 @@ defmodule SwapListener.Application do
   defp telegram_bot_config do
     token = Application.fetch_env!(:telegram, :token)
     {SwapListener.TelegramBot, token: token, max_bot_concurrency: 10}
+  end
+
+  defp set_telegram_commands do
+    commands = TelegramBotSetupHelper.get_commands()
+
+    formatted_commands =
+      Enum.map(commands, fn {command, description} ->
+        %{command: command, description: description}
+      end)
+
+    TelegramClientImpl.set_my_commands(formatted_commands)
   end
 end

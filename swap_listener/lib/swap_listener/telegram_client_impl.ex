@@ -56,4 +56,23 @@ defmodule SwapListener.TelegramClientImpl do
       Logger.error("Unexpected error while sending photo to #{chat_id}: #{inspect(error)}")
       {:error, error}
   end
+
+  def set_my_commands(commands) do
+    token = Application.fetch_env!(:telegram, :token)
+    Logger.debug("Setting commands: #{inspect(commands)}")
+
+    case Telegram.Api.request(token, "setMyCommands",
+           commands: commands,
+           scope: %{type: "all_private_chats"},
+           language_code: "en"
+         ) do
+      {:ok, response} ->
+        Logger.debug("Commands set successfully. Response: #{inspect(response)}")
+        :ok
+
+      {:error, error} ->
+        Logger.error("Failed to set commands: #{inspect(error)}")
+        {:error, error}
+    end
+  end
 end
