@@ -17,6 +17,8 @@ defmodule SwapListener.CommandHandler.Main do
   @telegram_client Application.compile_env(:swap_listener, :telegram_client, SwapListener.RateLimitedTelegramClientImpl)
 
   def handle_command(command, chat_id, args, state) do
+    # Remove bot name from command if present
+    command = command |> String.split("@") |> hd()
     handle_slash_command(command, chat_id, args, state)
   end
 
