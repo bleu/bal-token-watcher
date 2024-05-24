@@ -172,7 +172,7 @@ defmodule SwapListener.NotificationService do
     [
       format_link("TX", details.tx_link),
       format_link("Buy", details.buy_link),
-      format_link("Deposit", details.deposit_link),
+      format_link("LP", details.deposit_link),
       format_link("Chart", details.dexscreener_url),
       format_link("Website", subscription.website_url),
       format_link("Twitter", subscription.twitter_handle),
