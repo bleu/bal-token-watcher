@@ -42,12 +42,6 @@ defmodule SwapListener.TelegramBot do
         %{"edited_message" => message} ->
           handle_message(message, state)
 
-        %{"left_chat_member" => %{"id" => _bot_id, "is_bot" => true}, "chat" => %{"id" => chat_id}} ->
-          Logger.info("Bot removed from chat: #{chat_id}, archiving subscriptions")
-          ChatSubscriptionManager.archive_subscriptions(chat_id)
-          RateLimiter.clear_messages_for_chat(chat_id)
-          {state, nil}
-
         _ ->
           Logger.info("Unhandled message type")
           {state, nil}
@@ -66,17 +60,15 @@ defmodule SwapListener.TelegramBot do
 
   defp handle_message(
          %{
-           "new_chat_member" => %{"username" => _username} = new_member,
+           "new_chat_member" => %{"username" => _username, "is_bot" => true},
            "chat" => %{"id" => chat_id},
            "from" => %{"username" => from_username}
          },
          state
        ) do
-    Logger.debug("New chat member: #{inspect(new_member)} added by: #{from_username} in chat: #{chat_id}")
-
     if AllowList.allowed?(from_username) do
-      @telegram_client.send_message(chat_id, "Hello #{new_member["first_name"]}!")
-      Logger.info("Sent hello message to #{new_member["username"]}")
+      @telegram_client.send_message(chat_id, "Hello #{from_username}!")
+      Logger.info("Sent hello message to #{from_username}")
     else
       Logger.warning("User #{from_username} is not allowed to add members")
       TelegramClientImpl.send_message(chat_id, "Sorry, I'm not allowed to be added by you.")
@@ -102,8 +94,22 @@ defmodule SwapListener.TelegramBot do
     end
   end
 
+  defp handle_message(
+         %{"left_chat_member" => %{"username" => _username, "is_bot" => true}, "chat" => %{"id" => chat_id}},
+         state
+       ) do
+    handle_bot_removed_from_chat(chat_id, state)
+  end
+
   defp handle_message(message, state) do
     Logger.info("Unhandled message received: #{inspect(message)}")
+    {state, nil}
+  end
+
+  defp handle_bot_removed_from_chat(chat_id, state) do
+    Logger.info("Bot removed from chat: #{chat_id}, archiving subscriptions")
+    ChatSubscriptionManager.archive_subscriptions(chat_id)
+    RateLimiter.clear_messages_for_chat(chat_id)
     {state, nil}
   end
 end
