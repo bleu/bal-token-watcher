@@ -5,6 +5,7 @@ defmodule SwapListener.BalancerPoller do
   import Ecto.Query, only: [from: 2]
 
   alias SwapListener.BalancerSwap
+  alias SwapListener.BlockchainConfig
   alias SwapListener.DexscreenerCache
   alias SwapListener.Pagination
   alias SwapListener.Repo
@@ -83,7 +84,10 @@ defmodule SwapListener.BalancerPoller do
         block: swap["block"],
         tx: swap["tx"],
         chain_id: chain_id,
-        dexscreener_url: get_or_fetch_dexscreener_url(chain_id, swap["tokenIn"], swap["tokenOut"])
+        dexscreener_url: get_or_fetch_dexscreener_url(chain_id, swap["tokenIn"], swap["tokenOut"]),
+        tx_link: get_explorer_link(chain_id, swap["tx"]),
+        deposit_link: get_pool_link(chain_id, swap["poolId"]["id"]),
+        buy_link: get_buy_link(chain_id, swap["tokenIn"], swap["tokenOut"])
       })
 
     Repo.transaction(fn ->
@@ -99,6 +103,44 @@ defmodule SwapListener.BalancerPoller do
           end
       end
     end)
+  end
+
+  defp get_buy_link(chain_id, token_in, token_out) do
+    cowswap_supported_chains = [1, 10]
+
+    if Enum.member?(cowswap_supported_chains, chain_id) do
+      get_cowswap_link(chain_id, token_in, token_out)
+    else
+      get_1inch_link(chain_id, token_in, token_out)
+    end
+  end
+
+  defp get_1inch_link(chain_id, token_in, token_out) do
+    base_url = "https://app.1inch.io"
+    # ETH
+    "#{base_url}/#/#{chain_id}/simple/swap/#{token_in}/#{token_out}"
+  end
+
+  defp get_cowswap_link(chain_id, token_in, token_out) do
+    base_url = "https://swap.cow.fi"
+
+    "#{base_url}/#/#{chain_id}/swap/#{token_in}/#{token_out}"
+  end
+
+  defp get_explorer_link(chain_id, tx_hash) do
+    base_url = Map.get(BlockchainConfig.chain_scanner_map(), chain_id, "https://etherscan.io")
+    "#{base_url}/tx/#{tx_hash}"
+  end
+
+  defp get_pool_link(chain_id, pool_id) do
+    base_url =
+      Map.get(
+        BlockchainConfig.balancer_pool_map(),
+        chain_id,
+        "https://pools.balancer.exchange/#/pool/"
+      )
+
+    "#{base_url}#{pool_id}"
   end
 
   defp get_or_fetch_dexscreener_url(chain_id, token_in, token_out) do

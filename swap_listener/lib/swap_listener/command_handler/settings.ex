@@ -61,12 +61,27 @@ defmodule SwapListener.CommandHandler.Settings do
 
   defp valid_settings_args?(args) do
     allowed_keys = [
-      "min_buy_amount",
-      "trade_size_step",
-      "alert_image_url",
+      # Link to buy token, e.g., on 1inch
+      "buy_link",
+      # Link to deposit funds
+      "deposit_link",
+      # Link to view the token chart
+      "chart_link",
+      # Official website of the token
       "website_url",
+      # Minimum amount to show alerts for
+      "min_buy_amount",
+      # Step size for trade size
+      "trade_size_step",
+      # Image URL for alerts
+      "alert_image_url",
+      # Official website of the token
+      "website_url",
+      # Twitter link of the token
       "twitter_handle",
+      # Discord link
       "discord_link",
+      # Telegram link
       "telegram_link"
     ]
 

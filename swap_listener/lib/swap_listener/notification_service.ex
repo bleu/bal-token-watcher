@@ -1,7 +1,6 @@
 defmodule SwapListener.NotificationService do
   @moduledoc false
 
-  alias SwapListener.BlockchainConfig
   alias SwapListener.ChatSubscriptionManager
 
   require Decimal
@@ -51,7 +50,10 @@ defmodule SwapListener.NotificationService do
          "updated_at" => _,
          "user_address" => user_address,
          "value_usd" => value_usd,
-         "dexscreener_url" => dexscreener_url
+         "dexscreener_url" => dexscreener_url,
+         "tx_link" => tx_link,
+         "buy_link" => buy_link,
+         "deposit_link" => deposit_link
        }) do
     details = %{
       id: id,
@@ -63,12 +65,15 @@ defmodule SwapListener.NotificationService do
       token_amount_in: Decimal.new(Kernel.to_string(token_amount_in)),
       token_amount_out: Decimal.new(Kernel.to_string(token_amount_out)),
       value_usd: Decimal.new(Kernel.to_string(value_usd)),
-      dexscreener_url: dexscreener_url,
       pool_id: pool_id,
       user_address: user_address,
       block: block,
       tx: tx,
-      chain_id: chain_id
+      chain_id: chain_id,
+      dexscreener_url: dexscreener_url,
+      tx_link: tx_link,
+      buy_link: buy_link,
+      deposit_link: deposit_link
     }
 
     {:ok, details}
@@ -127,21 +132,13 @@ defmodule SwapListener.NotificationService do
 
   defp format_message(details, subscription) do
     token_out_in_usd = Decimal.div(details.value_usd, details.token_amount_out)
-    dexscreener_link = format_link("DEX Screener", details.dexscreener_url)
-
-    to_append =
-      case dexscreener_link do
-        "" -> ""
-        _ -> " | #{dexscreener_link}"
-      end
 
     """
     *#{details.token_out_sym} PURCHASED!*
     Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
     Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
     Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
-    [Transaction](#{get_explorer_link(details.chain_id, details.tx)}) | [Balancer Pool](#{get_pool_link(details.chain_id, details.pool_id)})#{to_append}
-    #{format_links(subscription)}
+    #{format_links(subscription, details)}
     """
   end
 
@@ -171,8 +168,12 @@ defmodule SwapListener.NotificationService do
     add_thousand_separator(number_string)
   end
 
-  defp format_links(subscription) do
+  defp format_links(subscription, details) do
     [
+      format_link("TX", details.tx_link),
+      format_link("Buy", details.buy_link),
+      format_link("Deposit", details.deposit_link),
+      format_link("Chart", details.dexscreener_url),
       format_link("Website", subscription.website_url),
       format_link("Twitter", subscription.twitter_handle),
       format_link("Discord", subscription.discord_link),
@@ -187,22 +188,6 @@ defmodule SwapListener.NotificationService do
   end
 
   defp format_link(_label, _url), do: ""
-
-  defp get_explorer_link(chain_id, tx_hash) do
-    base_url = Map.get(BlockchainConfig.chain_scanner_map(), chain_id, "https://etherscan.io")
-    "#{base_url}/tx/#{tx_hash}"
-  end
-
-  defp get_pool_link(chain_id, pool_id) do
-    base_url =
-      Map.get(
-        BlockchainConfig.balancer_pool_map(),
-        chain_id,
-        "https://pools.balancer.exchange/#/pool/"
-      )
-
-    "#{base_url}#{pool_id}"
-  end
 
   # Use to trigger a test notification to a specific chat_id
   # SwapListener.NotificationService.send_test_notification(chat_id)
@@ -224,7 +209,11 @@ defmodule SwapListener.NotificationService do
       tx: "0xtx1234567890abcdef",
       updated_at: nil,
       user_address: "0xuseraddress123456",
-      value_usd: "5000.0"
+      value_usd: "5000.0",
+      dexscreener_url: "https://dexscreener.com",
+      tx_link: "https://etherscan.io/tx/0xtx1234567890abcdef",
+      buy_link: "https://app.1inch.io/#/1/simple/swap/0xtokenin123456/0xtokenout123456",
+      deposit_link: "https://app.1inch.io/#/1/pool/0xpoolid123456"
     }
 
     test_subscription = %{
@@ -232,10 +221,10 @@ defmodule SwapListener.NotificationService do
       token_address: notification.token_out,
       chain_id: notification.chain_id,
       alert_image_url: "https://picsum.photos/536/354",
-      website_url: nil,
-      twitter_handle: nil,
-      discord_link: nil,
-      telegram_link: nil
+      website_url: "https://example.com",
+      twitter_handle: "https://example.com",
+      discord_link: "https://example.com",
+      telegram_link: "https://example.com"
     }
 
     send_message(test_subscription, notification)
