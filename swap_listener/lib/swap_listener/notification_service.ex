@@ -139,6 +139,7 @@ defmodule SwapListener.NotificationService do
 
     """
     *#{details.token_out_sym} PURCHASED!*
+    #{format_trade_size_emoji(details.token_amount_out, subscription.trade_size_emoji, subscription.trade_size_step)}
     Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
     Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
     Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
@@ -170,6 +171,12 @@ defmodule SwapListener.NotificationService do
   def add_thousand_separator(number) when is_struct(number, Decimal) do
     number_string = Decimal.to_string(number)
     add_thousand_separator(number_string)
+  end
+
+  defp format_trade_size_emoji(token_amount, emoji, step) do
+    steps = Decimal.div(token_amount, Decimal.new(step))
+    emoji_string = String.duplicate(emoji, Decimal.to_integer(steps))
+    "#{emoji_string}"
   end
 
   defp format_links(subscription, details) do
