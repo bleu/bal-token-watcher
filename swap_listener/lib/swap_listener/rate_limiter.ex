@@ -4,6 +4,7 @@ defmodule SwapListener.RateLimiter do
 
   import Ecto.Query
 
+  alias SwapListener.ChatSubscription
   alias SwapListener.ChatSubscriptionManager
   alias SwapListener.Repo
 
@@ -127,8 +128,9 @@ defmodule SwapListener.RateLimiter do
   defp adjust_throttle(throttle_level, queue) do
     new_throttle_level = min(throttle_level + 1, length(@min_buy_amount_levels) - 1)
     new_min_buy_amount = Enum.at(@min_buy_amount_levels, new_throttle_level)
-    Logger.warning("Throttle level increased to #{new_throttle_level}, adjusting min_buy_amount to #{new_min_buy_amount}")
+    Logger.warning("Throttle level increased to #{new_throttle_level}, adjusting min buy amount to #{new_min_buy_amount}")
 
+    # Notify users in a friendly manner that the threshold is being adjusted
     notify_users_of_adjustment(new_min_buy_amount)
     Repo.transaction(fn -> adjust_min_buy_amount_for_all_subscriptions(new_min_buy_amount) end)
 
@@ -144,18 +146,15 @@ defmodule SwapListener.RateLimiter do
   end
 
   defp notify_users_of_adjustment(new_min_buy_amount) do
-    from(c in SwapListener.ChatSubscription, distinct: c.chat_id, select: c.chat_id)
+    from(c in ChatSubscription, distinct: c.chat_id, select: c.chat_id)
     |> Repo.all()
     |> Enum.each(fn chat_id ->
       Logger.debug("Notifying chat #{chat_id} of new min buy amount: #{new_min_buy_amount}")
 
-      case @telegram_client.send_message(
-             chat_id,
-             "🔔 To prevent rate limiting, we have adjusted the minimum buy amount to #{new_min_buy_amount}."
-           ) do
-        :ok -> :ok
-        {:error, reason} -> Logger.error("Failed to notify chat #{chat_id} of new min buy amount: #{inspect(reason)}")
-      end
+      @telegram_client.send_message(
+        chat_id,
+        "🔔 To enhance your experience and reduce noise, we've updated the minimum buy amount to #{new_min_buy_amount}."
+      )
     end)
   end
 
