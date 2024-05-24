@@ -72,6 +72,39 @@ defmodule SwapListener.TelegramClientImpl do
       {:error, error}
   end
 
+  @doc """
+  Sends an animation (GIF) to a specific chat_id with an optional caption.
+  """
+  def send_animation(chat_id, animation_url, caption \\ "") do
+    token = Application.fetch_env!(:telegram, :token)
+    Logger.debug("Attempting to send animation to #{chat_id}: #{animation_url} with caption: #{caption}")
+
+    case Telegram.Api.request(token, "sendAnimation",
+           chat_id: chat_id,
+           animation: animation_url,
+           caption: caption,
+           parse_mode: "Markdown"
+         ) do
+      {:ok, response} ->
+        Logger.debug("Animation sent successfully to #{chat_id}. Response: #{inspect(response)}")
+        :ok
+
+      {:error, %{"description" => "Forbidden: bot was kicked from the group chat"}} ->
+        Logger.error("Failed to send animation to #{chat_id}: bot was kicked from the group chat")
+        ChatSubscriptionManager.archive_subscriptions(chat_id)
+        RateLimiter.clear_messages_for_chat(chat_id)
+        {:error, :bot_kicked}
+
+      {:error, error} ->
+        Logger.error("Failed to send animation to #{chat_id}: #{inspect(error)}")
+        {:error, error}
+    end
+  rescue
+    error ->
+      Logger.error("Unexpected error while sending animation to #{chat_id}: #{inspect(error)}")
+      {:error, error}
+  end
+
   def set_my_commands(commands) do
     token = Application.fetch_env!(:telegram, :token)
     Logger.debug("Setting commands: #{inspect(commands)}")

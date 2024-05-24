@@ -24,7 +24,11 @@ defmodule SwapListener.NotificationService do
     message = format_message(details, subscription)
 
     if subscription.alert_image_url do
-      @telegram_client.send_photo(subscription.chat_id, subscription.alert_image_url, message)
+      if String.contains?(subscription.alert_image_url, ".gif") do
+        @telegram_client.send_animation(subscription.chat_id, subscription.alert_image_url, message)
+      else
+        @telegram_client.send_photo(subscription.chat_id, subscription.alert_image_url, message)
+      end
     else
       @telegram_client.send_message(subscription.chat_id, message)
     end
@@ -220,7 +224,8 @@ defmodule SwapListener.NotificationService do
       chat_id: chat_id,
       token_address: notification.token_out,
       chain_id: notification.chain_id,
-      alert_image_url: "https://picsum.photos/536/354",
+      alert_image_url:
+        "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnlpMTU2b3B5Nmlhajl2Y2Z3dnQwdG5zZzZpNHpzamlsa29taGxrZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3orieS4jfHJaKwkeli/giphy.gif",
       website_url: "https://example.com",
       twitter_handle: "https://example.com",
       discord_link: "https://example.com",

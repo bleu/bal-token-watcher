@@ -37,6 +37,11 @@ defmodule SwapListener.RateLimiter do
     GenServer.cast(__MODULE__, {:schedule_send_photo, chat_id, photo_url, caption})
   end
 
+  def schedule_send_animation(chat_id, animation_url, caption \\ "") do
+    Logger.debug("Scheduling animation to #{chat_id}: #{animation_url} with caption: #{caption}")
+    GenServer.cast(__MODULE__, {:schedule_send_animation, chat_id, animation_url, caption})
+  end
+
   def clear_messages_for_chat(chat_id) do
     Logger.debug("Clearing messages for chat_id: #{chat_id}")
     GenServer.cast(__MODULE__, {:clear_messages_for_chat, chat_id})
@@ -54,6 +59,12 @@ defmodule SwapListener.RateLimiter do
     {:noreply, %{state | queue: updated_queue}}
   end
 
+  def handle_cast({:schedule_send_animation, chat_id, animation_url, caption}, %{queue: queue} = state) do
+    Logger.debug("Handling cast for send_animation")
+    updated_queue = :queue.in({:animation, chat_id, animation_url, caption}, queue)
+    {:noreply, %{state | queue: updated_queue}}
+  end
+
   def handle_cast({:clear_messages_for_chat, chat_id}, %{queue: queue} = state) do
     Logger.debug("Clearing messages for chat_id: #{chat_id}")
 
@@ -62,6 +73,7 @@ defmodule SwapListener.RateLimiter do
         fn
           {:message, ^chat_id, _} -> false
           {:photo, ^chat_id, _, _} -> false
+          {:animation, ^chat_id, _, _} -> false
           _ -> true
         end,
         queue
@@ -114,6 +126,18 @@ defmodule SwapListener.RateLimiter do
 
               {:error, reason} ->
                 Logger.error("Failed to send photo to #{chat_id}: #{inspect(reason)}")
+                {:cont, {updated_queue, ms}}
+            end
+
+          {{:value, {:animation, chat_id, animation_url, caption}}, updated_queue} ->
+            Logger.debug("Sending animation to #{chat_id}: #{animation_url} with caption: #{caption}")
+
+            case @telegram_client.send_animation(chat_id, animation_url, caption) do
+              :ok ->
+                {:cont, {updated_queue, ms + 1}}
+
+              {:error, reason} ->
+                Logger.error("Failed to send animation to #{chat_id}: #{inspect(reason)}")
                 {:cont, {updated_queue, ms}}
             end
 

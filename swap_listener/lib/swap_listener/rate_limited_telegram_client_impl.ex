@@ -22,4 +22,12 @@ defmodule SwapListener.RateLimitedTelegramClientImpl do
     RateLimiter.schedule_send_photo(chat_id, photo_url, caption)
     :ok
   end
+
+  @doc """
+  Schedules an animation to be sent with rate limiting.
+  """
+  def send_animation(chat_id, animation_url, caption \\ "") do
+    RateLimiter.schedule_send_animation(chat_id, animation_url, caption)
+    :ok
+  end
 end
