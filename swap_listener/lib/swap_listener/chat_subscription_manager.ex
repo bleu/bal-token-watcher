@@ -175,8 +175,7 @@ defmodule SwapListener.ChatSubscriptionManager do
             handle_db_response(
               {:ok, nil},
               chat_id,
-              "Settings updated successfully for #{token_address} on chain #{chain_id}. \n
-              New settings: #{inspect(format_subscription_settings(updated_subscription))}."
+              "Settings updated successfully for #{token_address} on chain #{chain_id}. \nNew settings: #{format_subscription_settings(updated_subscription)}."
             )
 
           {:error, changeset} ->
