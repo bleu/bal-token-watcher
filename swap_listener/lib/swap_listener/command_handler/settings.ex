@@ -47,7 +47,7 @@ defmodule SwapListener.CommandHandler.Settings do
     if valid_settings_args?(args) do
       settings =
         Enum.reduce(args, %{}, fn arg, acc ->
-          case String.split(arg, ":") do
+          case String.split(arg, ":", parts: 2) do
             [key, value] -> Map.put(acc, String.to_atom(key), value)
             _ -> acc
           end
@@ -75,8 +75,6 @@ defmodule SwapListener.CommandHandler.Settings do
       "trade_size_step",
       # Image URL for alerts
       "alert_image_url",
-      # Official website of the token
-      "website_url",
       # Twitter link of the token
       "twitter_handle",
       # Discord link
@@ -86,7 +84,7 @@ defmodule SwapListener.CommandHandler.Settings do
     ]
 
     Enum.all?(args, fn arg ->
-      case String.split(arg, ":") do
+      case String.split(arg, ":", parts: 2) do
         [key, _value] -> key in allowed_keys
         _ -> false
       end
