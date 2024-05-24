@@ -21,6 +21,9 @@ defmodule SwapListener.BalancerSwap do
     field :tx, :string
     field :chain_id, :integer
     field :dexscreener_url, :string
+    field :tx_link, :string
+    field :deposit_link, :string
+    field :buy_link, :string
 
     timestamps()
   end
@@ -52,7 +55,10 @@ defmodule SwapListener.BalancerSwap do
       :timestamp,
       :block,
       :tx,
-      :chain_id
+      :chain_id,
+      :tx_link,
+      :deposit_link,
+      :buy_link
     ])
     |> validate_required([
       :id,
