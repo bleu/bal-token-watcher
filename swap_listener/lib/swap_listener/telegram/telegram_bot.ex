@@ -81,11 +81,6 @@ defmodule SwapListener.Telegram.TelegramBot do
        when type != "private" do
     Logger.debug("Received message: #{text} from chat: #{chat_id} in #{type} chat")
 
-    TelegramClientImpl.send_message(
-      chat_id,
-      "Hello #{username}! I only respond to commands in private chats. Please send me a direct message."
-    )
-
     {state, nil}
   end
 
