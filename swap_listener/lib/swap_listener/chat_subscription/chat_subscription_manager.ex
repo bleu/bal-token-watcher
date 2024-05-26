@@ -7,6 +7,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   alias SwapListener.ChatSubscription.ChatSubscription
   alias SwapListener.Infra.Repo
 
+  require Integer
   require Logger
 
   @telegram_client Application.compile_env(
@@ -24,6 +25,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   end
 
   def archive_subscriptions(chat_id) do
+    chat_id = enforce_to_integer(chat_id)
+
     Logger.info("Archiving all subscriptions for chat: #{chat_id}")
 
     Repo.transaction(fn ->
@@ -57,6 +60,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   end
 
   def list_subscriptions_from_chat(chat_id) do
+    chat_id = enforce_to_integer(chat_id)
+
     query =
       from(c in ChatSubscription,
         where: c.chat_id == ^chat_id and is_nil(c.archived_at),
@@ -110,6 +115,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   def subscribe(chat_id, user_id, state) do
     token_address = state.token_address
     chain_id = state.chain_id
+    chat_id = enforce_to_integer(chat_id)
 
     query =
       from(c in ChatSubscription,
@@ -161,40 +167,10 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
     end
   end
 
-  def unsubscribe(chat_id, user_id, token_address, chain_id) do
-    query =
-      from(c in ChatSubscription,
-        where:
-          c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id and
-            c.creator_id == ^user_id
-      )
-
-    case Repo.delete_all(query) do
-      {count, _} when count > 0 ->
-        handle_db_response(
-          {:ok, nil},
-          chat_id,
-          "You have successfully unsubscribed from alerts for token #{token_address} on chain #{chain_id}."
-        )
-
-      _ ->
-        handle_db_response({:ok, nil}, chat_id, "No subscriptions found to unsubscribe.")
-    end
-  end
-
-  def unsubscribe(chat_id, user_id) do
-    query = from(c in ChatSubscription, where: c.chat_id == ^chat_id and c.creator_id == ^user_id)
-
-    case Repo.delete_all(query) do
-      {count, _} when count > 0 ->
-        handle_db_response({:ok, nil}, chat_id, "You have successfully unsubscribed from all alerts.")
-
-      _ ->
-        handle_db_response({:ok, nil}, chat_id, "No subscriptions found to unsubscribe.")
-    end
-  end
-
   def get_subscription(chat_id, user_id, token_address, chain_id) do
+    chat_id = enforce_to_integer(chat_id)
+    user_id = enforce_to_integer(user_id)
+
     query =
       from(c in ChatSubscription,
         where:
@@ -208,25 +184,39 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   end
 
   def get_subscription_by_id(subscription_id) do
+    subscription_id = enforce_to_integer(subscription_id)
     Repo.get(ChatSubscription, subscription_id)
   end
 
-  def pause_subscription(subscription) do
-    changeset = ChatSubscription.changeset(subscription, %{paused: true})
-    Repo.update(changeset)
+  def pause_subscription(subscription_id) do
+    subscription_id = enforce_to_integer(subscription_id)
+    Repo.update_all(from(c in ChatSubscription, where: c.id == ^subscription_id), set: [paused: true])
+    :ok
   end
 
-  def pause(chat_id, user_id, token_address, chain_id) do
-    update_pause_status(chat_id, user_id, token_address, chain_id, true, "paused")
+  def restart_subscription(subscription_id) do
+    subscription_id = enforce_to_integer(subscription_id)
+    Repo.update_all(from(c in ChatSubscription, where: c.id == ^subscription_id), set: [paused: false])
+    :ok
+  end
+
+  def unsubscribe(subscription_id) do
+    subscription_id = enforce_to_integer(subscription_id)
+    Repo.delete_all(from(c in ChatSubscription, where: c.id == ^subscription_id), [])
+    :ok
   end
 
   def pause_all(user_id) do
+    user_id = enforce_to_integer(user_id)
+
     Repo.update_all(from(c in ChatSubscription, where: c.creator_id == ^user_id and is_nil(c.archived_at)),
       set: [paused: true]
     )
   end
 
   def restart_all(user_id) do
+    user_id = enforce_to_integer(user_id)
+
     Repo.update_all(
       from(c in ChatSubscription,
         where: c.creator_id == ^user_id and is_nil(c.archived_at),
@@ -237,38 +227,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   end
 
   def unsubscribe_all(user_id) do
+    user_id = enforce_to_integer(user_id)
     Repo.delete_all(from(c in ChatSubscription, where: c.creator_id == ^user_id and is_nil(c.archived_at)), [])
-  end
-
-  def restart(chat_id, user_id, token_address, chain_id) do
-    update_pause_status(chat_id, user_id, token_address, chain_id, false, "restarted")
-  end
-
-  defp update_pause_status(chat_id, user_id, token_address, chain_id, status, action) do
-    query =
-      from(c in ChatSubscription,
-        where:
-          c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id and
-            c.creator_id == ^user_id
-      )
-
-    case Repo.one(query) do
-      nil ->
-        handle_db_response({:error, nil}, chat_id, "No subscription found for #{token_address} on chain #{chain_id}.")
-
-      subscription ->
-        changeset = ChatSubscription.changeset(subscription, %{paused: status})
-
-        case Repo.update(changeset) do
-          {:ok, _subscription} ->
-            handle_db_response({:ok, nil}, chat_id, "Alerts #{action} for #{token_address} on chain #{chain_id}.")
-
-          {:error, changeset} ->
-            Logger.info("Failed to insert/update subscription for chat_id: #{chat_id}")
-            Logger.info("Changeset errors: #{inspect(changeset.errors)}")
-            handle_db_response({:error, changeset}, chat_id, "Failed to #{action} alerts.")
-        end
-    end
   end
 
   defp handle_db_response({:ok, _result}, chat_id, message) do
@@ -287,6 +247,9 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
       {:error, changeset} -> Logger.error("Failed to adjust min_buy_amount: #{inspect(changeset.errors)}")
     end
   end
+
+  defp enforce_to_integer(value) when is_integer(value), do: value
+  defp enforce_to_integer(value) when is_binary(value), do: String.to_integer(value)
 
   def update_subscription_setting(subscription_id, setting_key, setting_value) do
     subscription = Repo.get(ChatSubscription, subscription_id)

@@ -5,17 +5,12 @@ defmodule SwapListener.Telegram.TelegramBot do
   alias SwapListener.Bot.ActionHandler
   alias SwapListener.Bot.AllowList
   alias SwapListener.Bot.CommandDispatcher
+  alias SwapListener.Bot.Commands.Manage
   alias SwapListener.ChatSubscription.ChatSubscriptionManager
   alias SwapListener.Telegram.RateLimiter
   alias SwapListener.Telegram.TelegramClientImpl
 
   require Logger
-
-  @telegram_client Application.compile_env(
-                     :swap_listener,
-                     :telegram_client,
-                     SwapListener.Telegram.RateLimitedTelegramClientImpl
-                   )
 
   @session_ttl 86_400_000
 
@@ -57,11 +52,10 @@ defmodule SwapListener.Telegram.TelegramBot do
       end
 
     if reply do
-      @telegram_client.send_message(reply.chat_id, reply.text, reply)
+      TelegramClientImpl.send_message(reply.chat_id, reply.text, reply)
     end
 
     Logger.debug("New state: #{inspect(new_state)} with reply: #{inspect(reply)}")
-
     {:ok, new_state, @session_ttl}
   end
 
@@ -91,7 +85,7 @@ defmodule SwapListener.Telegram.TelegramBot do
        when type != "private" do
     Logger.debug("Received message: #{text} from chat: #{chat_id} in #{type} chat")
 
-    @telegram_client.send_message(
+    TelegramClientImpl.send_message(
       chat_id,
       "Hello #{username}! I only respond to commands in private chats. Please send me a direct message."
     )
@@ -108,7 +102,7 @@ defmodule SwapListener.Telegram.TelegramBot do
          state
        ) do
     if AllowList.allowed?(from_username) do
-      @telegram_client.send_message(
+      TelegramClientImpl.send_message(
         chat_id,
         "Hello #{from_username}! Please select your language by typing /language followed by the language code. Available languages: en, fr, es, pt, de, it, nl, pl, ru, zh, ja, ko."
       )
@@ -159,80 +153,28 @@ defmodule SwapListener.Telegram.TelegramBot do
        ) do
     {new_state, reply} =
       cond do
-        data == "pauseall" ->
-          {state, ActionHandler.pause_all(chat_id)}
-
-        data == "restartall" ->
-          {state, ActionHandler.restart_all(chat_id)}
-
-        data == "unsubscribeall" ->
-          {state, ActionHandler.unsubscribe_all(chat_id)}
-
-        String.starts_with?(data, "manage_subscription:") ->
-          subscription_id = data |> String.split(":") |> List.last() |> String.to_integer()
-          handle_subscription_management(subscription_id, state, chat_id)
-
-        String.starts_with?(data, "update_") ->
-          handle_update_query(data, state, chat_id)
-
-        true ->
-          handle_step_callback(data, state, chat_id, chat_id)
+        String.starts_with?(data, "pauseall") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "restartall") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "unsubscribeall") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "manage_chat:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "manage_subscription:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "pause_subscription:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "restart_subscription:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "unsubscribe_subscription:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "change_settings:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "update_") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "set_language:") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        true -> handle_step_callback(data, state, chat_id, chat_id)
       end
 
     answer_callback_query(callback_query_id)
     {new_state, reply}
   end
 
-  defp handle_subscription_management(subscription_id, state, chat_id) do
-    # Fetch the current subscription
-    case ChatSubscriptionManager.get_subscription_by_id(subscription_id) do
-      nil ->
-        reply = %{chat_id: chat_id, text: "Subscription not found."}
-        {state, reply}
-
-      subscription ->
-        # Format the settings into inline keyboard buttons
-        settings =
-          subscription
-          |> Map.from_struct()
-          |> Enum.filter(fn {key, _} ->
-            key in ~w(min_buy_amount trade_size_emoji trade_size_step alert_image_url website_url twitter_handle discord_link telegram_link)a
-          end)
-
-        inline_keyboard =
-          for {key, value} <- settings do
-            [%{"text" => "#{key}: #{value}", "callback_data" => "update_#{key}:#{subscription_id}"}]
-          end
-
-        # Send a message with the inline keyboard
-        reply = %{
-          chat_id: chat_id,
-          text: "Managing subscription: #{subscription_id}. What setting would you like to update?",
-          reply_markup: %{"inline_keyboard" => inline_keyboard}
-        }
-
-        {Map.put(state, :current_subscription, subscription_id), reply}
-    end
-  end
-
-  defp handle_update_query(data, state, chat_id) do
-    [setting, subscription_id_str] = String.split(data, ":")
-    subscription_id = String.to_integer(subscription_id_str)
-    setting_key = setting |> String.replace_prefix("update_", "") |> String.to_atom()
-
-    new_state =
-      state
-      |> Map.put(:step, {:updating, setting_key})
-      |> Map.put(:current_subscription, subscription_id)
-
-    reply = %{chat_id: chat_id, text: "Please enter the new value for `#{setting_key}`:"}
-    {new_state, reply}
-  end
-
   defp handle_step_callback(data, state, chat_id, user_id) do
     case state[:step] do
-      :chain_id ->
-        CommandDispatcher.handle_step(:chain_id, data, chat_id, user_id, state)
+      {:updating, setting_key} ->
+        CommandDispatcher.handle_step({:updating, setting_key}, data, chat_id, user_id, state)
 
       _ ->
         Logger.info("Unhandled callback query step")

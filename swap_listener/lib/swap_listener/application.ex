@@ -36,6 +36,7 @@ defmodule SwapListener.Application do
 
   def start(_type, _args) do
     children = default_children() ++ poller_children()
+    # children = default_children()
 
     opts = [strategy: :one_for_one, name: SwapListener.Supervisor]
 
