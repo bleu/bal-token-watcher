@@ -23,15 +23,15 @@ defmodule SwapListener.DataCase do
       import Ecto.Query
       import SwapListener.DataCase
 
-      alias SwapListener.Repo
+      alias SwapListener.Infra.Repo
     end
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwapListener.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwapListener.Infra.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(SwapListener.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(SwapListener.Infra.Repo, {:shared, self()})
     end
 
     :ok

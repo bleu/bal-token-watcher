@@ -3,7 +3,7 @@ import Config
 config :honeybadger,
   environment_name: :dev
 
-config :swap_listener, SwapListener.Repo,
+config :swap_listener, SwapListener.Infra.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",

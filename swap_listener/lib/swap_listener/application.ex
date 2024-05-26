@@ -8,10 +8,9 @@ defmodule SwapListener.Application do
   `:one_for_one`, meaning if a child process terminates, only that process is restarted.
 
   The application starts the following child processes:
-  - `SwapListener.Repo`: Manages database interactions.
+  - `SwapListener.Infra.Repo`: Manages database interactions.
   - `Phoenix.PubSub`: Provides a publish-subscribe system for message broadcasting.
   - `SwapListener.SwapListener`: Listens for swap events and processes them.
-  - `SwapListener.TokenAdditionManager`: Manages the addition of new tokens.
   - `SwapListener.ChatSubscriptionManager`: Manages chat subscriptions for swap notifications.
   - `SwapListener.RateLimiter`: Manages rate limiting for Telegram bot interactions.
   - `Telegram.Webhook`: Manages Telegram webhook integration for bot commands.
@@ -24,30 +23,41 @@ defmodule SwapListener.Application do
   """
   use Application
 
-  alias SwapListener.BlockchainConfig
-  alias SwapListener.TelegramBotSetupHelper
-  alias SwapListener.TelegramClientImpl
+  alias SwapListener.Balancer.BalancerPoller
+  alias SwapListener.ChatSubscription.ChatSubscriptionManager
+  alias SwapListener.Common.BlockchainConfig
+  alias SwapListener.Dexscreener.DexscreenerUrlManager
+  alias SwapListener.Infra.Repo
+  alias SwapListener.Notifications
+  alias SwapListener.Telegram.RateLimiter
+  alias SwapListener.Telegram.TelegramBotSetupHelper
+
+  require Logger
 
   def start(_type, _args) do
     children = default_children() ++ poller_children()
 
     opts = [strategy: :one_for_one, name: SwapListener.Supervisor]
 
-    set_telegram_commands()
-    Supervisor.start_link(children, opts)
+    case TelegramBotSetupHelper.set_my_commands() do
+      {:ok, true} ->
+        Logger.info("Starting SwapListener application...")
+        Supervisor.start_link(children, opts)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   defp default_children do
     [
-      SwapListener.Repo,
+      Repo,
       {Phoenix.PubSub, name: SwapListener.PubSub},
-      {SwapListener.SwapListener, []},
-      {SwapListener.TokenAdditionManager, []},
-      SwapListener.ChatSubscriptionManager,
-      {SwapListener.RateLimiter, []},
+      {Notifications.Setup, []},
+      ChatSubscriptionManager,
+      {RateLimiter, [name: :telegram_rate_limiter]},
       {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]},
-      # Add the new manager here
-      {SwapListener.DexscreenerUrlManager, []}
+      {DexscreenerUrlManager, []}
     ]
   end
 
@@ -60,7 +70,7 @@ defmodule SwapListener.Application do
   end
 
   defp poller_child_spec({network, url, chain_id}) do
-    Supervisor.child_spec({SwapListener.BalancerPoller, {network, url, chain_id}},
+    Supervisor.child_spec({BalancerPoller, {network, url, chain_id}},
       id: String.to_atom("BalancerPoller_#{network}")
     )
   end
@@ -69,17 +79,6 @@ defmodule SwapListener.Application do
 
   defp telegram_bot_config do
     token = Application.fetch_env!(:telegram, :token)
-    {SwapListener.TelegramBot, token: token, max_bot_concurrency: 10}
-  end
-
-  defp set_telegram_commands do
-    commands = TelegramBotSetupHelper.get_commands()
-
-    formatted_commands =
-      Enum.map(commands, fn {command, description} ->
-        %{command: command, description: description}
-      end)
-
-    TelegramClientImpl.set_my_commands(formatted_commands)
+    {SwapListener.Telegram.TelegramBot, token: token, max_bot_concurrency: 10}
   end
 end

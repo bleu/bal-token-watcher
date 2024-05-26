@@ -1,4 +1,4 @@
-defmodule SwapListener.Repo.Migrations.AddLinksToBalancerSwap do
+defmodule SwapListener.Infra.Repo.Migrations.AddLinksToBalancerSwap do
   use Ecto.Migration
 
   def change do

@@ -12,7 +12,7 @@ database_url =
     For example: ecto://USER:PASS@HOST/DATABASE
     """
 
-config :swap_listener, SwapListener.Repo, url: database_url, ssl: true, ssl_opts: [verify: :verify_none]
+config :swap_listener, SwapListener.Infra.Repo, url: database_url, ssl: true, ssl_opts: [verify: :verify_none]
 
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: SwapListener.Finch

@@ -1,4 +1,4 @@
-defmodule SwapListener.Repo.Migrations.AddDexscreenerUrlToBalancerSwaps do
+defmodule SwapListener.Infra.Repo.Migrations.AddDexscreenerUrlToBalancerSwaps do
   use Ecto.Migration
 
   def change do

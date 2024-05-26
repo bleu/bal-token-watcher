@@ -6,7 +6,7 @@ import Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 
-config :swap_listener, SwapListener.Repo,
+config :swap_listener, SwapListener.Infra.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
@@ -30,4 +30,4 @@ config :phoenix, :plug_init_mode, :runtime
 
 # config :swap_listener, :telegram_client, SwapListener.TelegramClientMock
 # config :swap_listener, :http_client, SwapListener.HttpClientMock
-# config :swap_listener, :graphql_client, SwapListener.GraphQLClientMock
+# config :swap_listener, :graphql_client, SwapListener.Balancer.GraphQLClientMock

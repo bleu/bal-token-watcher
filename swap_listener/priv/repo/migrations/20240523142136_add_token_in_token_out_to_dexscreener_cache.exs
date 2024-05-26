@@ -1,4 +1,4 @@
-defmodule SwapListener.Repo.Migrations.AddTokenInTokenOutToDexscreenerCache do
+defmodule SwapListener.Infra.Repo.Migrations.AddTokenInTokenOutToDexscreenerCache do
   use Ecto.Migration
 
   def change do

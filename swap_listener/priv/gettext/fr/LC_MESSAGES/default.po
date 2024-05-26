@@ -1,0 +1,75 @@
+# French translations
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: lib/swap_listener/bot/commands/help.ex:63
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/help [command]`*: Get detailed information about a specific command. Just add the command after `/help`."
+msgstr "/help [commande] : Obtenez des informations détaillées sur une commande spécifique. Ajoutez simplement la commande après /help."
+
+#: lib/swap_listener/bot/commands/help.ex:60
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/start`*: Welcome message and initial setup."
+msgstr "/start : Message de bienvenue et configuration initiale."
+
+#: lib/swap_listener/bot/commands/help.ex:46
+#, elixir-autogen, elixir-format
+msgid "Unknown command. Please type /help for a list of available commands."
+msgstr "Commande inconnue. Veuillez taper /help pour une liste des commandes disponibles."
+
+#: lib/swap_listener/bot/commands/help.ex:65
+#, elixir-autogen, elixir-format
+msgid "Use these commands to stay updated on token trades and manage your alert preferences."
+msgstr "Utilisez ces commandes pour rester informé sur les échanges de jetons et gérer vos préférences d'alerte."
+
+#: lib/swap_listener/bot/commands/help.ex:19
+#, elixir-autogen, elixir-format, fuzzy
+msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
+msgstr "Vous êtes vraiment à fond, n'est-ce pas ? 😄 Voici une aide pour votre aide : continuez à ajouter 'help' pour aller plus loin. Exemple : /help help help"
+
+#: lib/swap_listener/bot/commands/help.ex:53
+#, elixir-autogen, elixir-format
+msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
+msgstr "🤯 Essayez-vous de me casser ? Je plaisante, demandez ce que vous voulez ! Mais sérieusement, tapez /help pour la liste des commandes."
+
+#: lib/swap_listener/bot/command_dispatcher_helper.ex:12
+#, elixir-autogen, elixir-format
+msgid "Available Chains:"
+msgstr "Chaînes disponibles :"
+
+#: lib/swap_listener/bot/commands/help.ex:58
+#, elixir-autogen, elixir-format
+msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:61
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
+msgstr "/addtoken : Commencez le processus d'ajout d'un nouveau jeton pour les alertes d'achat. Suivez les instructions pour configurer les paramètres du jeton."
+
+#: lib/swap_listener/bot/commands/help.ex:62
+#, elixir-autogen, elixir-format
+msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:15
+#, elixir-autogen, elixir-format
+msgid "Begin the process to add a new token for buy alerts."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:22
+#, elixir-autogen, elixir-format
+msgid "Get an example message."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:17
+#, elixir-autogen, elixir-format
+msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:14
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Welcome to the SwapListener Bot. Type `/help` for more information."
+msgstr "Bienvenue sur le Balancer Buy Bot. Tapez /help pour plus d'informations."

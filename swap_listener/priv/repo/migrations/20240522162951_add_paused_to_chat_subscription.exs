@@ -1,4 +1,4 @@
-defmodule SwapListener.Repo.Migrations.AddPausedToChatSubscription do
+defmodule SwapListener.Infra.Repo.Migrations.AddPausedToChatSubscription do
   use Ecto.Migration
 
   def change do

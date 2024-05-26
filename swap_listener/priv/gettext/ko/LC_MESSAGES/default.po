@@ -1,0 +1,75 @@
+# Korean translations
+msgid ""
+msgstr ""
+"Language: ko\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: lib/swap_listener/bot/commands/help.ex:63
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/help [command]`*: Get detailed information about a specific command. Just add the command after `/help`."
+msgstr "/help [명령]: 특정 명령에 대한 자세한 정보를 얻으십시오. /help 다음에 명령을 추가하십시오."
+
+#: lib/swap_listener/bot/commands/help.ex:60
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/start`*: Welcome message and initial setup."
+msgstr "/start: 환영 메시지 및 초기 설정."
+
+#: lib/swap_listener/bot/commands/help.ex:46
+#, elixir-autogen, elixir-format
+msgid "Unknown command. Please type /help for a list of available commands."
+msgstr "알 수 없는 명령입니다. 사용 가능한 명령 목록을 보려면 /help를 입력하십시오."
+
+#: lib/swap_listener/bot/commands/help.ex:65
+#, elixir-autogen, elixir-format
+msgid "Use these commands to stay updated on token trades and manage your alert preferences."
+msgstr "이 명령을 사용하여 토큰 거래에 대한 최신 정보를 유지하고 알림 기본 설정을 관리하십시오."
+
+#: lib/swap_listener/bot/commands/help.ex:19
+#, elixir-autogen, elixir-format, fuzzy
+msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
+msgstr "정말로 이거에 빠져있죠? 😄 여기에 대한 도움말이 있습니다: 더 깊이 들어가려면 'help'를 계속 추가하십시오. 예: /help help help"
+
+#: lib/swap_listener/bot/commands/help.ex:53
+#, elixir-autogen, elixir-format
+msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
+msgstr "🤯 나를 부수려고 하는 거야? 농담이야, 뭐든 물어봐! 하지만 진지하게, 명령 목록을 보려면 /help를 입력하십시오."
+
+#: lib/swap_listener/bot/command_dispatcher_helper.ex:12
+#, elixir-autogen, elixir-format
+msgid "Available Chains:"
+msgstr "사용 가능한 체인:"
+
+#: lib/swap_listener/bot/commands/help.ex:58
+#, elixir-autogen, elixir-format
+msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:61
+#, elixir-autogen, elixir-format, fuzzy
+msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
+msgstr "/addtoken: 구매 알림을 위한 새 토큰 추가 프로세스를 시작합니다. 프롬프트를 따라 토큰 설정을 구성하십시오."
+
+#: lib/swap_listener/bot/commands/help.ex:62
+#, elixir-autogen, elixir-format
+msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:15
+#, elixir-autogen, elixir-format
+msgid "Begin the process to add a new token for buy alerts."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:22
+#, elixir-autogen, elixir-format
+msgid "Get an example message."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:17
+#, elixir-autogen, elixir-format
+msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:14
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Welcome to the SwapListener Bot. Type `/help` for more information."
+msgstr "Balancer Buy Bot에 오신 것을 환영합니다. 자세한 내용은 /help를 입력하십시오."

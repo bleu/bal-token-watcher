@@ -1,10 +1,10 @@
 import Config
 
 config :swap_listener,
-  ecto_repos: [SwapListener.Repo],
-  telegram_client: SwapListener.RateLimitedTelegramClientImpl,
+  ecto_repos: [SwapListener.Infra.Repo],
+  telegram_client: SwapListener.Telegram.RateLimitedTelegramClientImpl,
   http_client: SwapListener.HttpClientImpl,
-  graphql_client: SwapListener.GraphQLClientImpl
+  graphql_client: SwapListener.Balancer.GraphQLClientImpl
 
 config :honeybadger,
   api_key: System.get_env("HONEYBADGER_API_KEY"),
@@ -22,7 +22,7 @@ config :telegram,
 
 config :tesla, adapter: {Tesla.Adapter.Hackney, [recv_timeout: 40_000]}
 
-config :swap_listener, SwapListener.Repo,
+config :swap_listener, SwapListener.Infra.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
@@ -39,5 +39,9 @@ config :tailwind,
   version: "3.2.7"
 
 config :logger, level: :info
+
+config :swap_listener, SwapListener.I18n.Gettext,
+  default_locale: "en",
+  locales: ~w(en fr es pt de it nl pl ru zh ja ko)
 
 import_config "#{config_env()}.exs"

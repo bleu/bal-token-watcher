@@ -1,4 +1,4 @@
-defmodule SwapListener.Repo.Migrations.AddArchivedAtToChatSubscriptions do
+defmodule SwapListener.Infra.Repo.Migrations.AddArchivedAtToChatSubscriptions do
   use Ecto.Migration
 
   def change do
