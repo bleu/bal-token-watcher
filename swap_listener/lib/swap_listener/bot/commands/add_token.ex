@@ -14,11 +14,7 @@ defmodule SwapListener.Bot.Commands.AddToken do
                    )
 
   def handle(chat_id, _user_id, _args, state) do
-    request_id = 4 |> :crypto.strong_rand_bytes() |> :binary.decode_unsigned()
-
-    if request_id > 2_147_483_647 do
-      ^request_id = request_id - 4_294_967_296
-    end
+    request_id = generate_request_id()
 
     reply_markup = %{
       keyboard: [
@@ -46,6 +42,17 @@ defmodule SwapListener.Bot.Commands.AddToken do
 
     {new_state, reply}
   end
+
+  defp generate_request_id do
+    request_id = 4 |> :crypto.strong_rand_bytes() |> :binary.decode_unsigned()
+    normalize_request_id(request_id)
+  end
+
+  defp normalize_request_id(request_id) when request_id > 2_147_483_647 do
+    request_id - 4_294_967_296
+  end
+
+  defp normalize_request_id(request_id), do: request_id
 
   def handle_step(:chat_selection, command, chat_id, user_id, state) do
     Logger.debug("Received chat selection: #{inspect(command)}")
