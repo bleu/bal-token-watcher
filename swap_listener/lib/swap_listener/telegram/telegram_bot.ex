@@ -70,10 +70,7 @@ defmodule SwapListener.Telegram.TelegramBot do
       [command | args] = String.split(text)
       CommandDispatcher.dispatch(command, chat_id, user_id, args, state)
     else
-      case state[:step] do
-        %{updating: setting_key} -> CommandDispatcher.handle_step(%{updating: setting_key}, text, chat_id, user_id, state)
-        _ -> {state, nil}
-      end
+      CommandDispatcher.handle_step(state[:step], text, chat_id, user_id, state)
     end
   end
 
@@ -171,13 +168,11 @@ defmodule SwapListener.Telegram.TelegramBot do
   end
 
   defp handle_step_callback(data, state, chat_id, user_id) do
-    case state[:step] do
-      %{updating: setting_key} ->
-        CommandDispatcher.handle_step(%{updating: setting_key}, data, chat_id, user_id, state)
-
-      _ ->
-        Logger.info("Unhandled callback query step")
-        {state, nil}
+    if state[:step] do
+      CommandDispatcher.handle_step(state[:step], data, chat_id, user_id, state)
+    else
+      Logger.info("Ignoring callback query step")
+      {state, nil}
     end
   end
 
