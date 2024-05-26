@@ -97,14 +97,7 @@ defmodule SwapListener.Telegram.TelegramBot do
          },
          state
        ) do
-    if AllowList.allowed?(from_username) do
-      TelegramClientImpl.send_message(
-        chat_id,
-        "Hello #{from_username}! Please select your language by typing /language followed by the language code. Available languages: en, fr, es, pt, de, it, nl, pl, ru, zh, ja, ko."
-      )
-
-      Logger.info("Sent hello message to #{from_username}")
-    else
+    unless AllowList.allowed?(from_username) do
       Logger.warning("User #{from_username} is not allowed to add members")
       TelegramClientImpl.send_message(chat_id, "Sorry, I'm not allowed to be added by you.", [])
       TelegramClientImpl.leave_chat(chat_id)
