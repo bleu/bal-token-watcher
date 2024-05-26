@@ -16,7 +16,7 @@ defmodule SwapListener.Telegram.TelegramClientImpl do
     message_opts =
       opts
       |> Enum.into([])
-      |> Keyword.merge(text: text, chat_id: chat_id, parse_mode: "Markdown")
+      |> Keyword.merge(text: text, chat_id: chat_id, parse_mode: "Markdown", link_preview_options: %{is_disabled: true})
 
     send_telegram_request("sendMessage", message_opts)
   end
