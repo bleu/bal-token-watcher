@@ -25,7 +25,8 @@ defmodule SwapListener.Telegram.TelegramBot do
       website_url: nil,
       twitter_handle: nil,
       discord_link: nil,
-      telegram_link: nil
+      telegram_link: nil,
+      updating: nil
     }
 
     {:ok, state, @session_ttl}
@@ -69,11 +70,9 @@ defmodule SwapListener.Telegram.TelegramBot do
       [command | args] = String.split(text)
       CommandDispatcher.dispatch(command, chat_id, user_id, args, state)
     else
-      if state[:step] do
-        CommandDispatcher.handle_step(state[:step], text, chat_id, user_id, state)
-      else
-        Logger.debug("Ignoring non-command message")
-        {state, nil}
+      case state[:step] do
+        %{updating: setting_key} -> CommandDispatcher.handle_step(%{updating: setting_key}, text, chat_id, user_id, state)
+        _ -> {state, nil}
       end
     end
   end
@@ -173,8 +172,8 @@ defmodule SwapListener.Telegram.TelegramBot do
 
   defp handle_step_callback(data, state, chat_id, user_id) do
     case state[:step] do
-      {:updating, setting_key} ->
-        CommandDispatcher.handle_step({:updating, setting_key}, data, chat_id, user_id, state)
+      %{updating: setting_key} ->
+        CommandDispatcher.handle_step(%{updating: setting_key}, data, chat_id, user_id, state)
 
       _ ->
         Logger.info("Unhandled callback query step")

@@ -40,8 +40,15 @@ defmodule SwapListener.Bot.Commands.Manage do
       ["update_discord_link", subscription_id] -> update_discord_link(subscription_id, chat_id, state)
       ["update_telegram_link", subscription_id] -> update_telegram_link(subscription_id, chat_id, state)
       ["update_language", subscription_id] -> update_language(subscription_id, chat_id, state)
-      ["set_language", data] -> set_language(data, chat_id, state)
+      ["set_language", language_code, subscription_id] -> set_language(subscription_id, language_code, chat_id, state)
       _ -> {state, %{chat_id: chat_id, text: "Unknown action."}}
+    end
+  end
+
+  def set_setting(setting, value, subscription_id, chat_id, state) do
+    case ChatSubscriptionManager.update_subscription_setting(subscription_id, setting, value) do
+      :ok -> {state, %{chat_id: chat_id, text: "Setting updated."}}
+      {:error, _reason} -> {state, %{chat_id: chat_id, text: "Failed to update setting."}}
     end
   end
 
@@ -179,12 +186,15 @@ defmodule SwapListener.Bot.Commands.Manage do
     handle_language_selection(subscription_id, chat_id, state)
   end
 
-  defp set_language(data, chat_id, state) do
-    handle_language_update(data, chat_id, state)
+  defp set_language(subscription_id, language_code, chat_id, state) do
+    case ChatSubscriptionManager.update_subscription_setting(subscription_id, :language, language_code) do
+      :ok -> set_step(state, chat_id, nil, subscription_id, "Language set to #{language_code}.")
+      {:error, _reason} -> set_step(state, chat_id, nil, subscription_id, "Failed to update language.")
+    end
   end
 
   defp set_step(state, chat_id, step, subscription_id, text) do
-    new_state = Map.put(state, :step, step)
+    new_state = Map.put(state, :step, %{updating: step})
     new_state = Map.put(new_state, :current_subscription, subscription_id)
     reply = %{chat_id: chat_id, text: text}
     {new_state, reply}
@@ -214,14 +224,30 @@ defmodule SwapListener.Bot.Commands.Manage do
     {state, reply}
   end
 
-  defp handle_language_update(data, chat_id, state) do
-    [language_code, subscription_id_str] = String.split(data, ":")
-    subscription_id = String.to_integer(subscription_id_str)
+  defp extract_chats_with_titles(subscriptions) do
+    subscriptions
+    |> Enum.map(& &1.chat_id)
+    |> Enum.uniq()
+    |> Enum.map(&fetch_chat_title/1)
+  end
 
-    case ChatSubscriptionManager.update_subscription_setting(subscription_id, :language, language_code) do
-      :ok -> {state, %{chat_id: chat_id, text: "Language has been set to #{language_code}."}}
-      {:error, reason} -> {state, %{chat_id: chat_id, text: "Failed to set language: #{reason}"}}
+  defp fetch_chat_title(chat_id) do
+    case TelegramClientImpl.get_chat(chat_id) do
+      {:ok, %{"title" => title}} -> {chat_id, title}
+      {:error, _reason} -> {chat_id, "Chat #{chat_id}"}
     end
+  end
+
+  defp build_chat_buttons(chats) do
+    chat_buttons = Enum.map(chats, fn {chat_id, title} -> [%{text: title, callback_data: "manage_chat:#{chat_id}"}] end)
+
+    all_actions_buttons = [
+      [%{text: "Pause All", callback_data: "pauseall"}],
+      [%{text: "Restart All", callback_data: "restartall"}],
+      [%{text: "Unsubscribe All", callback_data: "unsubscribeall"}]
+    ]
+
+    chat_buttons ++ all_actions_buttons
   end
 
   defp extract_chats_with_titles(subscriptions) do
