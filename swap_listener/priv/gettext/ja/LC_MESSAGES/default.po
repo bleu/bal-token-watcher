@@ -1,75 +1,124 @@
-# Japanese translations
-msgid ""
-msgstr ""
-"Language: ja\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-
-#: lib/swap_listener/bot/commands/help.ex:63
-#, elixir-autogen, elixir-format, fuzzy
+#: lib/swap_listener/bot/commands/help.ex:61
+#, elixir-autogen, elixir-format
 msgid "*`/help [command]`*: Get detailed information about a specific command. Just add the command after `/help`."
-msgstr "/help [コマンド]：特定のコマンドに関する詳細情報を取得します。/helpの後にコマンドを追加するだけです。"
-
-#: lib/swap_listener/bot/commands/help.ex:60
-#, elixir-autogen, elixir-format, fuzzy
-msgid "*`/start`*: Welcome message and initial setup."
-msgstr "/start：ウェルカムメッセージと初期設定。"
-
-#: lib/swap_listener/bot/commands/help.ex:46
-#, elixir-autogen, elixir-format
-msgid "Unknown command. Please type /help for a list of available commands."
-msgstr "不明なコマンドです。利用可能なコマンドのリストについては/helpと入力してください。"
-
-#: lib/swap_listener/bot/commands/help.ex:65
-#, elixir-autogen, elixir-format
-msgid "Use these commands to stay updated on token trades and manage your alert preferences."
-msgstr "これらのコマンドを使用してトークン取引の最新情報を取得し、アラートの設定を管理します。"
-
-#: lib/swap_listener/bot/commands/help.ex:19
-#, elixir-autogen, elixir-format, fuzzy
-msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
-msgstr "これに本当に興味がありますよね？😄 こちらはあなたのためのヘルプです：さらに深く進むために「help」を追加し続けてください。例：/help help help"
-
-#: lib/swap_listener/bot/commands/help.ex:53
-#, elixir-autogen, elixir-format
-msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
-msgstr "🤯 私を壊そうとしているのですか？冗談です、何でも聞いてください！でも本当に、コマンドリストについては/helpと入力してください。"
-
-#: lib/swap_listener/bot/command_dispatcher_helper.ex:12
-#, elixir-autogen, elixir-format
-msgid "Available Chains:"
-msgstr "利用可能なチェーン："
+msgstr ""
 
 #: lib/swap_listener/bot/commands/help.ex:58
 #, elixir-autogen, elixir-format
-msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
+msgid "*`/start`*: Welcome message and initial setup."
 msgstr ""
 
-#: lib/swap_listener/bot/commands/help.ex:61
-#, elixir-autogen, elixir-format, fuzzy
-msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
-msgstr "/addtoken: 新しいトークンを購入アラートに追加するプロセスを開始します。プロンプトに従ってトークンの設定を構成します。"
-
-#: lib/swap_listener/bot/commands/help.ex:62
+#: lib/swap_listener/bot/commands/help.ex:44
 #, elixir-autogen, elixir-format
-msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgid "Unknown command. Please type /help for a list of available commands."
 msgstr ""
 
-#: lib/swap_listener/bot/commands/help.ex:15
+#: lib/swap_listener/bot/commands/help.ex:63
 #, elixir-autogen, elixir-format
-msgid "Begin the process to add a new token for buy alerts."
-msgstr ""
-
-#: lib/swap_listener/bot/commands/help.ex:22
-#, elixir-autogen, elixir-format
-msgid "Get an example message."
+msgid "Use these commands to stay updated on token trades and manage your alert preferences."
 msgstr ""
 
 #: lib/swap_listener/bot/commands/help.ex:17
 #, elixir-autogen, elixir-format
-msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
 msgstr ""
 
-#: lib/swap_listener/bot/commands/help.ex:14
-#, elixir-autogen, elixir-format, fuzzy
+#: lib/swap_listener/bot/commands/help.ex:51
+#, elixir-autogen, elixir-format
+msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
+msgstr ""
+
+#: lib/swap_listener/bot/command_dispatcher_helper.ex:12
+#, elixir-autogen, elixir-format
+msgid "Available Chains:"
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:56
+#, elixir-autogen, elixir-format
+msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
+msgstr "*SwapListener Botへようこそ！* こちらは私とのやり取り方法です："
+
+#: lib/swap_listener/bot/commands/help.ex:59
+#, elixir-autogen, elixir-format
+msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
+msgstr ""
+
+#: lib/swap_listener/bot/commands/help.ex:60
+#, elixir-autogen, elixir-format
+msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr "*`/manage`*: サブスクリプションを管理します。個別またはすべてのサブスクリプションを一時停止、再起動、または退会することができます。"
+
+#: lib/swap_listener/bot/commands/help.ex:13
+#, elixir-autogen, elixir-format
+msgid "Begin the process to add a new token for buy alerts."
+msgstr "購入アラートのために新しいトークンを追加するプロセスを開始します。"
+
+#: lib/swap_listener/bot/commands/help.ex:20
+#, elixir-autogen, elixir-format
+msgid "Get an example message."
+msgstr "例のメッセージを取得します。"
+
+#: lib/swap_listener/bot/commands/help.ex:15
+#, elixir-autogen, elixir-format
+msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
+msgstr "サブスクリプションを管理します。個別またはすべてのサブスクリプションを一時停止、再起動、または退会することができます。"
+
+#: lib/swap_listener/bot/commands/help.ex:12
+#, elixir-autogen, elixir-format
 msgid "Welcome to the SwapListener Bot. Type `/help` for more information."
-msgstr "Balancer Buy Botへようこそ。詳細については/helpと入力してください。"
+msgstr ""
+
+#: lib/swap_listener/bot/notification_service.ex:192
+#, elixir-autogen, elixir-format
+msgid "Bought"
+msgstr "購入"
+
+#: lib/swap_listener/bot/notification_service.ex:250
+#, elixir-autogen, elixir-format
+msgid "Buy"
+msgstr "購入"
+
+#: lib/swap_listener/bot/notification_service.ex:252
+#, elixir-autogen, elixir-format
+msgid "Chart"
+msgstr "チャート"
+
+#: lib/swap_listener/bot/notification_service.ex:251
+#, elixir-autogen, elixir-format
+msgid "Deposit"
+msgstr "預け入れ"
+
+#: lib/swap_listener/bot/notification_service.ex:255
+#, elixir-autogen, elixir-format
+msgid "Discord"
+msgstr "ディスコード"
+
+#: lib/swap_listener/bot/notification_service.ex:193
+#, elixir-autogen, elixir-format
+msgid "Price"
+msgstr "価格"
+
+#: lib/swap_listener/bot/notification_service.ex:191
+#, elixir-autogen, elixir-format
+msgid "Spent"
+msgstr "費やした"
+
+#: lib/swap_listener/bot/notification_service.ex:249
+#, elixir-autogen, elixir-format
+msgid "TX"
+msgstr "トランザクション"
+
+#: lib/swap_listener/bot/notification_service.ex:256
+#, elixir-autogen, elixir-format
+msgid "Telegram"
+msgstr "テレグラム"
+
+#: lib/swap_listener/bot/notification_service.ex:254
+#, elixir-autogen, elixir-format
+msgid "Twitter"
+msgstr "ツイッター"
+
+#: lib/swap_listener/bot/notification_service.ex:253
+#, elixir-autogen, elixir-format
+msgid "Website"
+msgstr "ウェブサイト"

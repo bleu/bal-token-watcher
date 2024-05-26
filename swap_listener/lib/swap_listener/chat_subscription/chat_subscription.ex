@@ -20,11 +20,12 @@ defmodule SwapListener.ChatSubscription.ChatSubscription do
     field :paused, :boolean, default: false
     field :archived_at, :utc_datetime
     field :creator_id, :integer
+    field :language, :string, default: "en"
 
     timestamps()
   end
 
-  @required_fields ~w(chat_id  token_address chain_id min_buy_amount trade_size_emoji trade_size_step creator_id)a
+  @required_fields ~w(chat_id token_address chain_id min_buy_amount trade_size_emoji trade_size_step creator_id language)a
   @optional_fields ~w(alert_image_url website_url twitter_handle discord_link telegram_link paused archived_at chat_title)a
 
   @doc false

@@ -47,7 +47,8 @@ defmodule SwapListener.Bot.Commands.Manage do
       [%{text: "Pause", callback_data: "pause_subscription:#{subscription_id}"}],
       [%{text: "Restart", callback_data: "restart_subscription:#{subscription_id}"}],
       [%{text: "Unsubscribe", callback_data: "unsubscribe_subscription:#{subscription_id}"}],
-      [%{text: "Change Settings", callback_data: "change_settings:#{subscription_id}"}]
+      [%{text: "Change Settings", callback_data: "change_settings:#{subscription_id}"}],
+      [%{text: "Change Language", callback_data: "change_language:#{subscription_id}"}]
     ]
 
     reply_markup = %{inline_keyboard: buttons}
@@ -61,11 +62,53 @@ defmodule SwapListener.Bot.Commands.Manage do
     {state, reply}
   end
 
+  def handle_callback_query("change_language:" <> subscription_id, chat_id, _user_id, state) do
+    languages = %{
+      "en" => "English",
+      "zh" => "Chinese (中文)",
+      "ko" => "Korean (한국어)",
+      "es" => "Spanish (Español)",
+      "ja" => "Japanese (日本語)",
+      "pt" => "Portuguese (Português)",
+      "fr" => "French (Français)",
+      "ru" => "Russian (Русский)",
+      "de" => "German (Deutsch)",
+      "it" => "Italian (Italiano)",
+      "pl" => "Polish (Polski)",
+      "nl" => "Dutch (Nederlands)"
+    }
+
+    buttons =
+      Enum.map(languages, fn {code, name} -> [%{text: name, callback_data: "set_language:#{code}:#{subscription_id}"}] end)
+
+    reply_markup = %{inline_keyboard: buttons}
+
+    reply = %{
+      chat_id: chat_id,
+      text: "Select your preferred language:",
+      reply_markup: reply_markup
+    }
+
+    {state, reply}
+  end
+
+  def handle_callback_query("set_language:" <> data, chat_id, _user_id, state) do
+    [language_code, subscription_id] = String.split(data, ":")
+    subscription_id = String.to_integer(subscription_id)
+
+    case ChatSubscriptionManager.update_subscription_setting(subscription_id, :language, language_code) do
+      :ok ->
+        reply = %{chat_id: chat_id, text: "Language has been set to #{language_code}."}
+        {state, reply}
+
+      {:error, reason} ->
+        reply = %{chat_id: chat_id, text: "Failed to set language: #{reason}"}
+        {state, reply}
+    end
+  end
+
   def handle_callback_query("change_settings:" <> subscription_id, chat_id, _user_id, state) do
     state = Map.put(state, :current_subscription, subscription_id)
-
-    # Add the necessary steps to update subscription settings
-    new_state = Map.put(state, :step, :select_setting)
 
     buttons = [
       [%{text: "Min Buy Amount", callback_data: "update_min_buy_amount:#{subscription_id}"}],
@@ -75,7 +118,8 @@ defmodule SwapListener.Bot.Commands.Manage do
       [%{text: "Website URL", callback_data: "update_website_url:#{subscription_id}"}],
       [%{text: "Twitter Handle", callback_data: "update_twitter_handle:#{subscription_id}"}],
       [%{text: "Discord Link", callback_data: "update_discord_link:#{subscription_id}"}],
-      [%{text: "Telegram Link", callback_data: "update_telegram_link:#{subscription_id}"}]
+      [%{text: "Telegram Link", callback_data: "update_telegram_link:#{subscription_id}"}],
+      [%{text: "Language", callback_data: "update_language:#{subscription_id}"}]
     ]
 
     reply_markup = %{inline_keyboard: buttons}
@@ -86,7 +130,52 @@ defmodule SwapListener.Bot.Commands.Manage do
       reply_markup: reply_markup
     }
 
-    {new_state, reply}
+    {state, reply}
+  end
+
+  def handle_callback_query("update_language:" <> subscription_id, chat_id, _user_id, state) do
+    languages = %{
+      "en" => "English",
+      "fr" => "French",
+      "es" => "Spanish",
+      "pt" => "Portuguese",
+      "de" => "German",
+      "it" => "Italian",
+      "nl" => "Dutch",
+      "pl" => "Polish",
+      "ru" => "Russian",
+      "zh" => "Chinese",
+      "ja" => "Japanese",
+      "ko" => "Korean"
+    }
+
+    buttons =
+      Enum.map(languages, fn {code, name} -> [%{text: name, callback_data: "set_language:#{code}:#{subscription_id}"}] end)
+
+    reply_markup = %{inline_keyboard: buttons}
+
+    reply = %{
+      chat_id: chat_id,
+      text: "Select your preferred language:",
+      reply_markup: reply_markup
+    }
+
+    {state, reply}
+  end
+
+  def handle_callback_query("set_language:" <> data, chat_id, _user_id, state) do
+    [language_code, subscription_id] = String.split(data, ":")
+    subscription_id = String.to_integer(subscription_id)
+
+    case ChatSubscriptionManager.update_subscription_setting(subscription_id, :language, language_code) do
+      :ok ->
+        reply = %{chat_id: chat_id, text: "Language has been set to #{language_code}."}
+        {state, reply}
+
+      {:error, reason} ->
+        reply = %{chat_id: chat_id, text: "Failed to set language: #{reason}"}
+        {state, reply}
+    end
   end
 
   # Add functions to handle each specific setting update:

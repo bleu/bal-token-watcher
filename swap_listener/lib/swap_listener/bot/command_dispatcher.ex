@@ -4,20 +4,17 @@ defmodule SwapListener.Bot.CommandDispatcher do
   alias SwapListener.Bot.Commands.AddToken
   alias SwapListener.Bot.Commands.ExampleMessage
   alias SwapListener.Bot.Commands.Help
-  alias SwapListener.Bot.Commands.Language
   alias SwapListener.Bot.Commands.Manage
-  alias SwapListener.Bot.Commands.Pause
+  alias SwapListener.Bot.Commands.Start
   alias SwapListener.Bot.Commands.Subscriptions
 
   @handlers %{
     "/addtoken" => {AddToken, :handle},
     "/help" => {Help, :handle},
-    "/pause" => {Pause, :handle},
     "/start" => {Start, :handle},
     "/manage" => {Manage, :handle},
     "/subscriptions" => {Subscriptions, :handle},
-    "/example" => {ExampleMessage, :handle},
-    "/language" => {Language, :handle}
+    "/example" => {ExampleMessage, :handle}
   }
 
   def dispatch(command, chat_id, user_id, args, state) do
@@ -55,6 +52,7 @@ defmodule SwapListener.Bot.CommandDispatcher do
       :twitter_handle -> update_subscription_setting(state, chat_id, :twitter_handle, text)
       :discord_link -> update_subscription_setting(state, chat_id, :discord_link, text)
       :telegram_link -> update_subscription_setting(state, chat_id, :telegram_link, text)
+      :language -> update_language_setting(state, chat_id, text)
       _ -> {state, %{chat_id: chat_id, text: "Unknown setting."}}
     end
   end
@@ -75,6 +73,26 @@ defmodule SwapListener.Bot.CommandDispatcher do
       :error ->
         new_state = Map.put(state, :step, nil)
         reply = %{chat_id: chat_id, text: "Failed to update `#{setting_key}`."}
+        {new_state, reply}
+    end
+  end
+
+  defp update_language_setting(state, chat_id, language) do
+    subscription_id = state[:current_subscription]
+
+    case SwapListener.ChatSubscription.ChatSubscriptionManager.update_subscription_setting(
+           subscription_id,
+           :language,
+           language
+         ) do
+      :ok ->
+        new_state = Map.put(state, :step, nil)
+        reply = %{chat_id: chat_id, text: "Language set to #{language}."}
+        {new_state, reply}
+
+      :error ->
+        new_state = Map.put(state, :step, nil)
+        reply = %{chat_id: chat_id, text: "Failed to update language."}
         {new_state, reply}
     end
   end

@@ -8,7 +8,9 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
                      SwapListener.Telegram.RateLimitedTelegramClientImpl
                    )
 
-  def handle(chat_id, _command, _user_id, _, state) do
+  def handle(chat_id, user_id, args, state) do
+    language = List.first(args) || "en"
+
     example_notification = %{
       token_in: "0xExampleTokenIn",
       token_out: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
@@ -32,20 +34,43 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
       chain_id: 1,
       min_buy_amount: Decimal.new("1.0"),
       trade_size_emoji: "🚀",
-      trade_size_step: Decimal.new("0.1"),
+      trade_size_step: Decimal.new("1.0"),
       alert_image_url: "https://example.com/image.gif",
       website_url: "https://example.com",
-      twitter_handle: "example",
+      twitter_handle: "https://example.com",
       discord_link: "https://discord.gg/example",
       telegram_link: "https://t.me/example",
       paused: false,
       archived_at: nil,
-      creator_id: 1
+      creator_id: user_id,
+      language: language
     }
 
     message = NotificationService.format_message(example_notification, subscription)
     @telegram_client.send_message(chat_id, message)
 
+    settings_message = format_subscription_settings(subscription)
+    @telegram_client.send_message(chat_id, settings_message)
+
     {state, nil}
+  end
+
+  defp format_subscription_settings(subscription) do
+    """
+    *Example Subscription Settings:*
+    - *Chat Title:* #{subscription.chat_title}
+    - *Token Address:* #{subscription.token_address}
+    - *Chain ID:* #{subscription.chain_id}
+    - *Minimum Buy Amount:* #{Decimal.to_string(subscription.min_buy_amount)}
+    - *Trade Size Emoji:* #{subscription.trade_size_emoji}
+    - *Trade Size Step:* #{Decimal.to_string(subscription.trade_size_step)}
+    - *Alert Image URL:* #{subscription.alert_image_url}
+    - *Website URL:* #{subscription.website_url}
+    - *Twitter Handle:* #{subscription.twitter_handle}
+    - *Discord Link:* #{subscription.discord_link}
+    - *Telegram Link:* #{subscription.telegram_link}
+    - *Paused:* #{subscription.paused}
+    - *Language:* #{subscription.language}
+    """
   end
 end

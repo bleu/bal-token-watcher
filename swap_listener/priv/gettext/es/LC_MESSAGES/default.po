@@ -4,32 +4,32 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/swap_listener/bot/commands/help.ex:63
+#: lib/swap_listener/bot/commands/help.ex:61
 #, elixir-autogen, elixir-format, fuzzy
 msgid "*`/help [command]`*: Get detailed information about a specific command. Just add the command after `/help`."
 msgstr "/help [comando]: Obtén información detallada sobre un comando específico. Simplemente agrega el comando después de /help."
 
-#: lib/swap_listener/bot/commands/help.ex:60
+#: lib/swap_listener/bot/commands/help.ex:58
 #, elixir-autogen, elixir-format, fuzzy
 msgid "*`/start`*: Welcome message and initial setup."
 msgstr "/start: Mensaje de bienvenida y configuración inicial."
 
-#: lib/swap_listener/bot/commands/help.ex:46
+#: lib/swap_listener/bot/commands/help.ex:44
 #, elixir-autogen, elixir-format
 msgid "Unknown command. Please type /help for a list of available commands."
 msgstr "Comando desconocido. Por favor escribe /help para una lista de comandos disponibles."
 
-#: lib/swap_listener/bot/commands/help.ex:65
+#: lib/swap_listener/bot/commands/help.ex:63
 #, elixir-autogen, elixir-format
 msgid "Use these commands to stay updated on token trades and manage your alert preferences."
 msgstr "Usa estos comandos para mantenerte actualizado sobre intercambios de tokens y gestionar tus preferencias de alerta."
 
-#: lib/swap_listener/bot/commands/help.ex:19
+#: lib/swap_listener/bot/commands/help.ex:17
 #, elixir-autogen, elixir-format, fuzzy
 msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
 msgstr "Estás realmente interesado en esto, ¿no? 😄 Aquí hay una ayuda para tu ayuda: sigue añadiendo 'help' para ir más profundo. Ejemplo: /help help help"
 
-#: lib/swap_listener/bot/commands/help.ex:53
+#: lib/swap_listener/bot/commands/help.ex:51
 #, elixir-autogen, elixir-format
 msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
 msgstr "🤯 ¿Estás tratando de romperme? Es broma, pregunta lo que quieras! Pero en serio, escribe /help para la lista de comandos."
@@ -39,37 +39,92 @@ msgstr "🤯 ¿Estás tratando de romperme? Es broma, pregunta lo que quieras! P
 msgid "Available Chains:"
 msgstr "Cadenas disponibles:"
 
-#: lib/swap_listener/bot/commands/help.ex:58
+#: lib/swap_listener/bot/commands/help.ex:56
 #, elixir-autogen, elixir-format
 msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
-msgstr ""
+msgstr "*¡Bienvenido al SwapListener Bot!* Aquí está cómo puedes interactuar conmigo:"
 
-#: lib/swap_listener/bot/commands/help.ex:61
+#: lib/swap_listener/bot/commands/help.ex:59
 #, elixir-autogen, elixir-format, fuzzy
 msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
 msgstr "/addtoken: Inicia el proceso para agregar un nuevo token para alertas de compra. Sigue las indicaciones para configurar los ajustes del token."
 
-#: lib/swap_listener/bot/commands/help.ex:62
+#: lib/swap_listener/bot/commands/help.ex:60
 #, elixir-autogen, elixir-format
 msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
-msgstr ""
+msgstr "*`/manage`*: Administra tus suscripciones. Puedes pausar, reiniciar o darte de baja de suscripciones individuales o de todas."
+
+#: lib/swap_listener/bot/commands/help.ex:13
+#, elixir-autogen, elixir-format
+msgid "Begin the process to add a new token for buy alerts."
+msgstr "Comienza el proceso para agregar un nuevo token para alertas de compra."
+
+#: lib/swap_listener/bot/commands/help.ex:20
+#, elixir-autogen, elixir-format
+msgid "Get an example message."
+msgstr "Obtener un mensaje de ejemplo."
 
 #: lib/swap_listener/bot/commands/help.ex:15
 #, elixir-autogen, elixir-format
-msgid "Begin the process to add a new token for buy alerts."
-msgstr ""
-
-#: lib/swap_listener/bot/commands/help.ex:22
-#, elixir-autogen, elixir-format
-msgid "Get an example message."
-msgstr ""
-
-#: lib/swap_listener/bot/commands/help.ex:17
-#, elixir-autogen, elixir-format
 msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
-msgstr ""
+msgstr "Administra tus suscripciones. Puedes pausar, reiniciar o darte de baja de suscripciones individuales o de todas."
 
-#: lib/swap_listener/bot/commands/help.ex:14
+#: lib/swap_listener/bot/commands/help.ex:12
 #, elixir-autogen, elixir-format, fuzzy
 msgid "Welcome to the SwapListener Bot. Type `/help` for more information."
 msgstr "Bienvenido al Balancer Buy Bot. Escribe /help para más información."
+
+#: lib/swap_listener/bot/notification_service.ex:192
+#, elixir-autogen, elixir-format
+msgid "Bought"
+msgstr "Comprado"
+
+#: lib/swap_listener/bot/notification_service.ex:250
+#, elixir-autogen, elixir-format
+msgid "Buy"
+msgstr "Comprar"
+
+#: lib/swap_listener/bot/notification_service.ex:252
+#, elixir-autogen, elixir-format
+msgid "Chart"
+msgstr "Gráfico"
+
+#: lib/swap_listener/bot/notification_service.ex:251
+#, elixir-autogen, elixir-format
+msgid "Deposit"
+msgstr "Depósito"
+
+#: lib/swap_listener/bot/notification_service.ex:255
+#, elixir-autogen, elixir-format
+msgid "Discord"
+msgstr "Discord"
+
+#: lib/swap_listener/bot/notification_service.ex:193
+#, elixir-autogen, elixir-format
+msgid "Price"
+msgstr "Precio"
+
+#: lib/swap_listener/bot/notification_service.ex:191
+#, elixir-autogen, elixir-format
+msgid "Spent"
+msgstr "Gastado"
+
+#: lib/swap_listener/bot/notification_service.ex:249
+#, elixir-autogen, elixir-format
+msgid "TX"
+msgstr "Transacción"
+
+#: lib/swap_listener/bot/notification_service.ex:256
+#, elixir-autogen, elixir-format
+msgid "Telegram"
+msgstr "Telegram"
+
+#: lib/swap_listener/bot/notification_service.ex:254
+#, elixir-autogen, elixir-format
+msgid "Twitter"
+msgstr "Twitter"
+
+#: lib/swap_listener/bot/notification_service.ex:253
+#, elixir-autogen, elixir-format
+msgid "Website"
+msgstr "Sitio web"

@@ -48,7 +48,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           twitter_handle: c.twitter_handle,
           discord_link: c.discord_link,
           telegram_link: c.telegram_link,
-          paused: c.paused
+          paused: c.paused,
+          language: c.language
         }
       )
 
@@ -73,7 +74,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           twitter_handle: c.twitter_handle,
           discord_link: c.discord_link,
           telegram_link: c.telegram_link,
-          paused: c.paused
+          paused: c.paused,
+          language: c.language
         }
       )
 
@@ -97,7 +99,8 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           twitter_handle: c.twitter_handle,
           discord_link: c.discord_link,
           telegram_link: c.telegram_link,
-          paused: c.paused
+          paused: c.paused,
+          language: c.language
         }
       )
 

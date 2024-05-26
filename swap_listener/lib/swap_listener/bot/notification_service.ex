@@ -1,5 +1,7 @@
 defmodule SwapListener.Bot.NotificationService do
   @moduledoc false
+  import SwapListener.I18n.Gettext
+
   alias SwapListener.ChatSubscription.ChatSubscriptionManager
 
   require Decimal
@@ -178,13 +180,17 @@ defmodule SwapListener.Bot.NotificationService do
 
   def format_message(details, subscription) do
     token_out_in_usd = Decimal.div(details.value_usd, details.token_amount_out)
+    # Set default language to "en" if nil
+    language = subscription.language || "en"
+
+    Gettext.put_locale(language)
 
     message = """
     *#{details.token_out_sym} PURCHASED!*
     #{format_trade_size_emoji(details.token_amount_out, subscription.trade_size_emoji, subscription.trade_size_step)}
-    Spent: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
-    Bought: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
-    Price: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
+    #{gettext("Spent")}: `#{humanize_value(details.token_amount_in)} #{details.token_in_sym}`
+    #{gettext("Bought")}: `#{humanize_value(details.token_amount_out)} #{details.token_out_sym} ($#{humanize_value(details.value_usd)})`
+    #{gettext("Price")}: `1 #{details.token_out_sym} = $ #{humanize_value(token_out_in_usd)}`
     #{format_links(subscription, details)}
     """
 
@@ -240,14 +246,14 @@ defmodule SwapListener.Bot.NotificationService do
 
   defp format_links(subscription, details) do
     [
-      format_link("TX", details.tx_link),
-      format_link("Buy", details.buy_link),
-      format_link("Deposit", details.deposit_link),
-      format_link("Chart", details.dexscreener_url),
-      format_link("Website", subscription.website_url),
-      format_link("Twitter", subscription.twitter_handle),
-      format_link("Discord", subscription.discord_link),
-      format_link("Telegram", subscription.telegram_link)
+      format_link(gettext("TX"), details.tx_link),
+      format_link(gettext("Buy"), details.buy_link),
+      format_link(gettext("Deposit"), details.deposit_link),
+      format_link(gettext("Chart"), details.dexscreener_url),
+      format_link(gettext("Website"), subscription.website_url),
+      format_link(gettext("Twitter"), subscription.twitter_handle),
+      format_link(gettext("Discord"), subscription.discord_link),
+      format_link(gettext("Telegram"), subscription.telegram_link)
     ]
     |> Enum.filter(&(&1 != ""))
     |> Enum.join(" | ")

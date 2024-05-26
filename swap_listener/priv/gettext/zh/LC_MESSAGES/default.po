@@ -11,72 +11,127 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/swap_listener/bot/commands/help.ex:63
+#: lib/swap_listener/bot/commands/help.ex:61
 #, elixir-autogen, elixir-format
 msgid "*`/help [command]`*: Get detailed information about a specific command. Just add the command after `/help`."
-msgstr ""
+msgstr "*`/help [command]`*: 获取特定命令的详细信息。只需在`/help`之后添加命令。"
 
-#: lib/swap_listener/bot/commands/help.ex:60
+#: lib/swap_listener/bot/commands/help.ex:58
 #, elixir-autogen, elixir-format
 msgid "*`/start`*: Welcome message and initial setup."
-msgstr ""
+msgstr "*`/start`*: 欢迎消息和初始设置。"
 
-#: lib/swap_listener/bot/commands/help.ex:46
+#: lib/swap_listener/bot/commands/help.ex:44
 #, elixir-autogen, elixir-format
 msgid "Unknown command. Please type /help for a list of available commands."
-msgstr ""
+msgstr "未知命令。请输入 /help 获取可用命令列表。"
 
-#: lib/swap_listener/bot/commands/help.ex:65
+#: lib/swap_listener/bot/commands/help.ex:63
 #, elixir-autogen, elixir-format
 msgid "Use these commands to stay updated on token trades and manage your alert preferences."
-msgstr ""
+msgstr "使用这些命令保持对代币交易的最新了解并管理您的警报偏好。"
 
-#: lib/swap_listener/bot/commands/help.ex:19
+#: lib/swap_listener/bot/commands/help.ex:17
 #, elixir-autogen, elixir-format
 msgid "You're really into this, aren't you? 😄 Here’s a help for your help: just keep adding 'help' to go deeper. Example: `/help help help`"
-msgstr ""
+msgstr "你真的很喜欢这个，对吧？😄 这是一个帮助你的帮助：只需不断添加'help'即可深入。例如：`/help help help`"
 
-#: lib/swap_listener/bot/commands/help.ex:53
+#: lib/swap_listener/bot/commands/help.ex:51
 #, elixir-autogen, elixir-format
 msgid "🤯 Are you trying to break me? Just kidding, ask away! But seriously, type /help for the command list."
-msgstr ""
+msgstr "🤯 你是在尝试打破我吗？开玩笑的，尽管问吧！但说真的，输入 /help 获取命令列表。"
 
 #: lib/swap_listener/bot/command_dispatcher_helper.ex:12
 #, elixir-autogen, elixir-format
 msgid "Available Chains:"
-msgstr ""
+msgstr "可用链："
 
-#: lib/swap_listener/bot/commands/help.ex:58
+#: lib/swap_listener/bot/commands/help.ex:56
 #, elixir-autogen, elixir-format
 msgid "*Welcome to the SwapListener Bot!* Here’s how you can interact with me:"
-msgstr ""
+msgstr "*欢迎使用 SwapListener Bot!* 这是与我互动的方式："
 
-#: lib/swap_listener/bot/commands/help.ex:61
+#: lib/swap_listener/bot/commands/help.ex:59
 #, elixir-autogen, elixir-format, fuzzy
 msgid "*`/addtoken`*: Begin the process to add a new token for buy alerts. Follow the prompts to configure settings for the token."
-msgstr ""
+msgstr "*`/addtoken`*: 开始添加新代币以进行购买警报。按照提示配置代币设置。"
 
-#: lib/swap_listener/bot/commands/help.ex:62
+#: lib/swap_listener/bot/commands/help.ex:60
 #, elixir-autogen, elixir-format
 msgid "*`/manage`*: Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
-msgstr ""
+msgstr "*`/manage`*: 管理您的订阅。您可以暂停、重新启动或取消订阅单个或所有订阅。"
+
+#: lib/swap_listener/bot/commands/help.ex:13
+#, elixir-autogen, elixir-format
+msgid "Begin the process to add a new token for buy alerts."
+msgstr "开始添加新代币以进行购买警报的过程。"
+
+#: lib/swap_listener/bot/commands/help.ex:20
+#, elixir-autogen, elixir-format
+msgid "Get an example message."
+msgstr "获取示例消息。"
 
 #: lib/swap_listener/bot/commands/help.ex:15
 #, elixir-autogen, elixir-format
-msgid "Begin the process to add a new token for buy alerts."
-msgstr ""
-
-#: lib/swap_listener/bot/commands/help.ex:22
-#, elixir-autogen, elixir-format
-msgid "Get an example message."
-msgstr ""
-
-#: lib/swap_listener/bot/commands/help.ex:17
-#, elixir-autogen, elixir-format
 msgid "Manage your subscriptions. You can pause, restart, or unsubscribe from individual or all subscriptions."
-msgstr ""
+msgstr "管理您的订阅。您可以暂停、重新启动或取消订阅单个或所有订阅。"
 
-#: lib/swap_listener/bot/commands/help.ex:14
+#: lib/swap_listener/bot/commands/help.ex:12
 #, elixir-autogen, elixir-format, fuzzy
 msgid "Welcome to the SwapListener Bot. Type `/help` for more information."
-msgstr ""
+msgstr "欢迎使用 SwapListener Bot。输入 `/help` 获取更多信息。"
+
+#: lib/swap_listener/bot/notification_service.ex:192
+#, elixir-autogen, elixir-format
+msgid "Bought"
+msgstr "已购买"
+
+#: lib/swap_listener/bot/notification_service.ex:250
+#, elixir-autogen, elixir-format
+msgid "Buy"
+msgstr "购买"
+
+#: lib/swap_listener/bot/notification_service.ex:252
+#, elixir-autogen, elixir-format
+msgid "Chart"
+msgstr "图表"
+
+#: lib/swap_listener/bot/notification_service.ex:251
+#, elixir-autogen, elixir-format
+msgid "Deposit"
+msgstr "存款"
+
+#: lib/swap_listener/bot/notification_service.ex:255
+#, elixir-autogen, elixir-format
+msgid "Discord"
+msgstr "Discord"
+
+#: lib/swap_listener/bot/notification_service.ex:193
+#, elixir-autogen, elixir-format
+msgid "Price"
+msgstr "价格"
+
+#: lib/swap_listener/bot/notification_service.ex:191
+#, elixir-autogen, elixir-format
+msgid "Spent"
+msgstr "已花费"
+
+#: lib/swap_listener/bot/notification_service.ex:249
+#, elixir-autogen, elixir-format
+msgid "TX"
+msgstr "交易"
+
+#: lib/swap_listener/bot/notification_service.ex:256
+#, elixir-autogen, elixir-format
+msgid "Telegram"
+msgstr "Telegram"
+
+#: lib/swap_listener/bot/notification_service.ex:254
+#, elixir-autogen, elixir-format
+msgid "Twitter"
+msgstr "Twitter"
+
+#: lib/swap_listener/bot/notification_service.ex:253
+#, elixir-autogen, elixir-format
+msgid "Website"
+msgstr "网站"
