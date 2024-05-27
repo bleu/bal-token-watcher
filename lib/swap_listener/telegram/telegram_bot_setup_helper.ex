@@ -4,10 +4,10 @@ defmodule SwapListener.Telegram.TelegramBotSetupHelper do
 
   def get_commands do
     [
-      {"start", "Welcome to the Balancer Buy Bot. Type `/help` for more information."},
+      {"start", "Start the bot and get a welcome message."},
       {"addtoken", "Begin the process to add a new token for buy alerts."},
-      {"help", "Get detailed information about a specific command."},
-      {"manage", "Manage your subscriptions."},
+      {"help", "Get detailed information about available commands."},
+      {"manage", "Manage your subscriptions with various actions."},
       {"example", "Get an example message."}
     ]
   end

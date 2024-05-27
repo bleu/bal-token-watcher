@@ -3,8 +3,23 @@ defmodule SwapListener.Bot.Commands.Utils do
   import Ecto.Query, only: [from: 2]
 
   alias SwapListener.Balancer.BalancerSwap
+  alias SwapListener.ChatSubscription.ChatSubscriptionManager
   alias SwapListener.Common.BlockchainConfig
   alias SwapListener.Infra.Repo
+
+  def set_setting(setting, value, subscription_id, chat_id, state) do
+    case ChatSubscriptionManager.update_subscription_setting(subscription_id, setting, value) do
+      :ok -> {state, %{chat_id: chat_id, text: "Setting #{setting} updated to #{value}."}}
+      {:error, _reason} -> {state, %{chat_id: chat_id, text: "Failed to update setting."}}
+    end
+  end
+
+  def set_step(state, chat_id, step, subscription_id, text) do
+    new_state = Map.put(state, :step, %{updating: step})
+    new_state = Map.put(new_state, :current_subscription, subscription_id)
+    reply = %{chat_id: chat_id, text: text}
+    {new_state, reply}
+  end
 
   def format_subscription_table(subscriptions) do
     headers = ["Chat ID", "Chain", "Token (Symbol)", "Status"]

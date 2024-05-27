@@ -145,12 +145,14 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           })
 
         case Repo.insert(changeset) do
-          {:ok, _subscription} ->
+          {:ok, subscription} ->
             handle_db_response(
               {:ok, nil},
               chat_id,
               "You have successfully subscribed to alerts for token #{token_address} on chain #{chain_id}."
             )
+
+            subscription
 
           {:error, changeset} ->
             Logger.info("Failed to insert subscription for chat_id: #{chat_id}")
@@ -165,22 +167,6 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           "You are already subscribed to alerts for token #{token_address} on chain #{chain_id}."
         )
     end
-  end
-
-  def get_subscription(chat_id, user_id, token_address, chain_id) do
-    chat_id = enforce_to_integer(chat_id)
-    user_id = enforce_to_integer(user_id)
-
-    query =
-      from(c in ChatSubscription,
-        where:
-          c.chat_id == ^chat_id and c.token_address == ^token_address and c.chain_id == ^chain_id and
-            c.creator_id == ^user_id and
-            is_nil(c.archived_at),
-        select: c
-      )
-
-    Repo.one(query)
   end
 
   def get_subscription_by_id(subscription_id) do
@@ -266,6 +252,120 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
         )
 
         {:error, changeset.errors}
+    end
+  end
+
+  def remove_link(subscription_id, link_label) do
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+    index = Enum.find_index(links, fn link -> link.label == link_label end)
+
+    updated_links =
+      if index do
+        List.delete_at(links, index)
+      else
+        links
+      end
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to remove link: #{inspect(changeset.errors)}")
+    end
+  end
+
+  def add_link(subscription_id, label_url_comma_separated) do
+    [label, url] = String.split(label_url_comma_separated, ",", parts: 2)
+
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+    new_link = %{"label" => label, "url" => url, "default" => false, "status" => "enabled"}
+
+    updated_links = links ++ [new_link]
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to add link: #{inspect(changeset.errors)}")
+    end
+  end
+
+  def toggle_link_status(subscription_id, link_id) do
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+    index = Enum.find_index(links, fn link -> link["id"] == link_id end)
+
+    updated_links =
+      if index do
+        List.update_at(links, index, fn link ->
+          case link["status"] do
+            "enabled" -> %{link | "status" => "disabled"}
+            "disabled" -> %{link | "status" => "enabled"}
+          end
+        end)
+      else
+        links
+      end
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} ->
+        if index != nil do
+          Enum.at(updated_links, index)["status"]
+        else
+          :error
+        end
+
+      {:error, changeset} ->
+        Logger.error("Failed to toggle link: #{inspect(changeset.errors)}")
+    end
+  end
+
+  def remove_custom_link(subscription_id, link_name) do
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+    index = Enum.find_index(links, fn link -> link.label == link_name && !link.default end)
+
+    updated_links =
+      if index do
+        List.delete_at(links, index)
+      else
+        links
+      end
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to remove custom link: #{inspect(changeset.errors)}")
+    end
+  end
+
+  def update_link_label(subscription_id, link_id, new_label) do
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+    index = Enum.find_index(links, fn link -> link["id"] == link_id end)
+
+    updated_links =
+      if index do
+        List.update_at(links, index, fn link -> %{link | "label" => new_label} end)
+      else
+        links
+      end
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to update link label: #{inspect(changeset.errors)}")
     end
   end
 end

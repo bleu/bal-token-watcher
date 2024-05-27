@@ -21,11 +21,6 @@ defmodule SwapListener.Telegram.TelegramBot do
       chat_id: nil,
       token_address: nil,
       chain_id: nil,
-      alert_image_url: nil,
-      website_url: nil,
-      twitter_handle: nil,
-      discord_link: nil,
-      telegram_link: nil,
       updating: nil
     }
 
@@ -147,6 +142,8 @@ defmodule SwapListener.Telegram.TelegramBot do
         String.starts_with?(data, "unsubscribe_subscription:") -> Manage.handle_callback_query(data, chat_id, nil, state)
         String.starts_with?(data, "change_settings:") -> Manage.handle_callback_query(data, chat_id, nil, state)
         String.starts_with?(data, "update_") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "edit_link_") -> Manage.handle_callback_query(data, chat_id, nil, state)
+        String.starts_with?(data, "manage_") -> Manage.handle_callback_query(data, chat_id, nil, state)
         String.starts_with?(data, "set_language:") -> Manage.handle_callback_query(data, chat_id, nil, state)
         true -> handle_step_callback(data, state, chat_id, chat_id)
       end

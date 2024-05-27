@@ -54,10 +54,44 @@ defmodule SwapListener.Bot.Commands.AddToken do
 
   defp normalize_request_id(request_id), do: request_id
 
+  defp ensure_user_is_chat_admin(chat_id, user_id) do
+    case TelegramClientImpl.get_chat_member(chat_id, user_id) do
+      {:ok, %{"status" => "creator"}} ->
+        :ok
+
+      {:ok, %{"status" => "administrator"}} ->
+        :ok
+
+      {:ok, %{"status" => "member"}} ->
+        reply = %{chat_id: user_id, text: "You must be an admin or the group owner to add a token subscription."}
+        {:error, reply}
+
+      {:error, reason} ->
+        Logger.error("Failed to fetch chat member status: #{inspect(reason)}")
+        reply = %{chat_id: user_id, text: "Failed to fetch chat member status. Please try again."}
+        {:error, reply}
+
+      _ ->
+        Logger.error("Invalid chat member status")
+        reply = %{chat_id: user_id, text: "Invalid chat member status. Please try again."}
+        {:error, reply}
+    end
+  end
+
   def handle_step(:chat_selection, command, chat_id, user_id, state) do
     Logger.debug("Received chat selection: #{inspect(command)}")
     subscription_chat_id = command
 
+    case ensure_user_is_chat_admin(subscription_chat_id, user_id) do
+      :ok ->
+        handle_chat_selection(subscription_chat_id, chat_id, user_id, state)
+
+      {:error, reply} ->
+        {state, reply}
+    end
+  end
+
+  def handle_chat_selection(subscription_chat_id, chat_id, user_id, state) do
     case TelegramClientImpl.get_chat(subscription_chat_id) do
       {:ok, %{"title" => chat_title}} ->
         new_state =
@@ -110,12 +144,15 @@ defmodule SwapListener.Bot.Commands.AddToken do
     token_address = command
 
     if valid_token_address?(token_address) do
-      new_state = state |> Map.put(:token_address, token_address) |> Map.put(:step, :alert_image_url)
+      new_state = Map.put(state, :token_address, token_address)
 
       token_sym = Utils.get_token_sym(token_address, state[:chain_id])
-      confirmation_message = "You have selected the token: #{token_sym} (#{token_address})."
 
-      reply = %{chat_id: chat_id, text: "#{confirmation_message}\nPlease enter the alert image URL:"}
+      confirmation_message =
+        "You have selected the token: #{token_sym} (#{token_address}). Token subscription has been added."
+
+      reply = %{chat_id: chat_id, text: confirmation_message}
+      finalize_token_addition(chat_id, new_state)
       {new_state, reply}
     else
       reply = %{chat_id: chat_id, text: "Invalid token address. Please try again."}
@@ -123,113 +160,12 @@ defmodule SwapListener.Bot.Commands.AddToken do
     end
   end
 
-  def handle_step(:alert_image_url, command, chat_id, _user_id, state) do
-    alert_image_url = command
-
-    new_state =
-      state
-      |> Map.put(:alert_image_url, alert_image_url)
-      |> Map.put(:step, :website_url)
-
-    reply = %{chat_id: chat_id, text: "Please enter the website URL:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:website_url, command, chat_id, _user_id, state) do
-    website_url = command
-
-    new_state =
-      state
-      |> Map.put(:website_url, website_url)
-      |> Map.put(:step, :twitter_handle)
-
-    reply = %{chat_id: chat_id, text: "Please enter the Twitter handle:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:twitter_handle, command, chat_id, _user_id, state) do
-    twitter_handle = command
-
-    new_state =
-      state
-      |> Map.put(:twitter_handle, twitter_handle)
-      |> Map.put(:step, :discord_link)
-
-    reply = %{chat_id: chat_id, text: "Please enter the Discord link:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:discord_link, command, chat_id, _user_id, state) do
-    discord_link = command
-
-    new_state =
-      state
-      |> Map.put(:discord_link, discord_link)
-      |> Map.put(:step, :telegram_link)
-
-    reply = %{chat_id: chat_id, text: "Please enter the Telegram link:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:telegram_link, command, chat_id, _user_id, state) do
-    telegram_link = command
-
-    if valid_url?(telegram_link) do
-      new_state =
-        state
-        |> Map.put(:telegram_link, telegram_link)
-        |> Map.put(:step, :trade_size_emoji)
-
-      reply = %{chat_id: chat_id, text: "Please enter the trade size emoji:"}
-      {new_state, reply}
-    else
-      reply = %{
-        chat_id: chat_id,
-        text: "Invalid Telegram link provided. Please provide a valid link."
-      }
-
-      {state, reply}
-    end
-  end
-
-  def handle_step(:trade_size_emoji, command, chat_id, _user_id, state) do
-    trade_size_emoji = command
-
-    new_state =
-      state
-      |> Map.put(:trade_size_emoji, trade_size_emoji)
-      |> Map.put(:step, :trade_size_step)
-
-    reply = %{chat_id: chat_id, text: "Please enter the trade size step:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:trade_size_step, command, chat_id, _user_id, state) do
-    trade_size_step = command
-
-    new_state =
-      state
-      |> Map.put(:trade_size_step, trade_size_step)
-      |> Map.put(:step, :min_buy_amount)
-
-    reply = %{chat_id: chat_id, text: "Please enter the minimum buy amount:"}
-    {new_state, reply}
-  end
-
-  def handle_step(:min_buy_amount, command, chat_id, user_id, state) do
-    min_buy_amount = command
-
-    new_state = Map.put(state, :min_buy_amount, min_buy_amount)
-    finalize_token_addition(chat_id, user_id, new_state)
-    {%{}, nil}
-  end
-
-  defp finalize_token_addition(chat_id, user_id, state) do
-    ChatSubscriptionManager.subscribe(chat_id, user_id, state)
+  defp finalize_token_addition(chat_id, state) do
+    subscription = ChatSubscriptionManager.subscribe(chat_id, state[:creator_id], state)
 
     confirmation_message = """
     Token added successfully with the following details:
-    #{Utils.format_subscription_settings(state)}
+    #{Utils.format_subscription_settings(subscription)}
     """
 
     @telegram_client.send_message(chat_id, confirmation_message)
@@ -237,12 +173,5 @@ defmodule SwapListener.Bot.Commands.AddToken do
 
   defp valid_token_address?(address) do
     is_binary(address) and address != "" and Regex.match?(~r/^0x[a-fA-F0-9]{40}$/, address)
-  end
-
-  defp valid_url?(url) do
-    case :httpc.request(:head, {to_charlist(url), []}, [], []) do
-      {:ok, _response} -> true
-      {:error, _reason} -> false
-    end
   end
 end
