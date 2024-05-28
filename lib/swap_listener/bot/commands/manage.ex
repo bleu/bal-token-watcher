@@ -157,7 +157,9 @@ defmodule SwapListener.Bot.Commands.Manage do
   defp fetch_chat_title(chat_id) do
     case TelegramClientImpl.get_chat(chat_id) do
       {:ok, %{"title" => title}} -> {chat_id, title}
+      {:ok, %{"username" => username}} -> {chat_id, "Chat with #{username}"}
       {:error, _reason} -> {chat_id, "Chat #{chat_id}"}
+      _ -> {chat_id, "Chat #{chat_id}"}
     end
   end
 
