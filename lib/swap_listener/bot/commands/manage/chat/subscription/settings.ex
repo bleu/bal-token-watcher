@@ -4,6 +4,7 @@ defmodule SwapListener.Bot.Commands.Manage.Chat.Subscription.Settings do
     state = Map.put(state, :current_subscription, subscription_id)
 
     buttons = [
+      [%{text: "Alert Image URL", callback_data: "update_alert_image_url:#{subscription_id}"}],
       [%{text: "Min Buy Amount", callback_data: "update_min_buy_amount:#{subscription_id}"}],
       [%{text: "Trade Size Emoji", callback_data: "update_trade_size_emoji:#{subscription_id}"}],
       [%{text: "Trade Size Step", callback_data: "update_trade_size_step:#{subscription_id}"}]
