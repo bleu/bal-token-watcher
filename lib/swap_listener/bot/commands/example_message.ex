@@ -74,8 +74,7 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
       language: language
     }
 
-    message = NotificationService.format_message(example_notification, subscription)
-    @telegram_client.send_message(chat_id, message)
+    NotificationService.send_message(subscription, example_notification)
 
     settings_message = format_subscription_settings(subscription)
     @telegram_client.send_message(chat_id, settings_message)

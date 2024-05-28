@@ -37,7 +37,7 @@ defmodule SwapListener.Bot.NotificationService do
   #   end
   # end
 
-  defp send_message(subscription, details) do
+  def send_message(subscription, details) do
     message = format_message(details, subscription)
 
     if subscription.alert_image_url do
