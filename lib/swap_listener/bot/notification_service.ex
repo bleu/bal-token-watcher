@@ -16,12 +16,24 @@ defmodule SwapListener.Bot.NotificationService do
   def handle_notification(notification) do
     Logger.debug("Handling notification: #{inspect(notification)}")
 
+    # skip if updated_at is more than a minute ago
+
     with {:ok, details} <- process_notification(notification),
+         true <- was_created_recently?(details.updated_at),
          :ok <- broadcast(details) do
       Logger.debug("Notification processed and broadcast successfully")
     else
       error ->
         Logger.error("Failed to process notification: #{inspect(error)}")
+    end
+  end
+
+  defp was_created_recently?(created_at) do
+    case DateTime.from_iso8601("#{created_at}Z") do
+      {:ok, dt, _} ->
+        now = DateTime.utc_now()
+        diff = DateTime.diff(now, dt, :second)
+        diff < 60
     end
   end
 
@@ -81,54 +93,33 @@ defmodule SwapListener.Bot.NotificationService do
   end
 
   defp process_notification(notification) do
-    details = extract_details(notification)
+    details = %{
+      id: notification["id"],
+      caller: notification["caller"],
+      token_in: notification["token_in"],
+      token_in_sym: notification["token_in_sym"],
+      token_out: notification["token_out"],
+      token_out_sym: notification["token_out_sym"],
+      token_amount_in: Decimal.new(Kernel.to_string(notification["token_amount_in"])),
+      token_amount_out: Decimal.new(Kernel.to_string(notification["token_amount_out"])),
+      value_usd: Decimal.new(Kernel.to_string(notification["value_usd"])),
+      pool_id: notification["pool_id"],
+      user_address: notification["user_address"],
+      block: notification["block"],
+      tx: notification["tx"],
+      chain_id: notification["chain_id"],
+      dexscreener_url: notification["dexscreener_url"],
+      tx_link: notification["tx_link"],
+      buy_link: notification["buy_link"],
+      deposit_link: notification["deposit_link"],
+      updated_at: notification["updated_at"]
+    }
+
     {:ok, details}
   rescue
     e in ArgumentError ->
       Logger.error("Invalid data in notification payload: #{inspect(e)}")
       {:error, :invalid_data}
-  end
-
-  defp extract_details(%{
-         "block" => block,
-         "caller" => caller,
-         "chain_id" => chain_id,
-         "id" => id,
-         "pool_id" => pool_id,
-         "token_amount_in" => token_amount_in,
-         "token_amount_out" => token_amount_out,
-         "token_in" => token_in,
-         "token_in_sym" => token_in_sym,
-         "token_out" => token_out,
-         "token_out_sym" => token_out_sym,
-         "tx" => tx,
-         "user_address" => user_address,
-         "value_usd" => value_usd,
-         "dexscreener_url" => dexscreener_url,
-         "tx_link" => tx_link,
-         "buy_link" => buy_link,
-         "deposit_link" => deposit_link
-       }) do
-    %{
-      id: id,
-      caller: caller,
-      token_in: token_in,
-      token_in_sym: token_in_sym,
-      token_out: token_out,
-      token_out_sym: token_out_sym,
-      token_amount_in: Decimal.new(Kernel.to_string(token_amount_in)),
-      token_amount_out: Decimal.new(Kernel.to_string(token_amount_out)),
-      value_usd: Decimal.new(Kernel.to_string(value_usd)),
-      pool_id: pool_id,
-      user_address: user_address,
-      block: block,
-      tx: tx,
-      chain_id: chain_id,
-      dexscreener_url: dexscreener_url,
-      tx_link: tx_link,
-      buy_link: buy_link,
-      deposit_link: deposit_link
-    }
   end
 
   defp broadcast(details) do
