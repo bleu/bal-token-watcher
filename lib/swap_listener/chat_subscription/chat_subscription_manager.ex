@@ -125,7 +125,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
             chat_title: state[:chat_title],
             token_address: token_address,
             chain_id: chain_id,
-            min_buy_amount: Decimal.new(state[:min_buy_amount] || "0.1"),
+            min_buy_amount: Decimal.new(state[:min_buy_amount] || "1.0"),
             alert_image_url: state[:alert_image_url] || nil,
             paused: false,
             creator_id: user_id
