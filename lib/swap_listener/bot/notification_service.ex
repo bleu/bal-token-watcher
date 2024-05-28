@@ -19,8 +19,8 @@ defmodule SwapListener.Bot.NotificationService do
     # skip if updated_at is more than a minute ago
 
     with {:ok, details} <- process_notification(notification),
-         true <- was_created_recently?(details.updated_at),
-         :ok <- broadcast(details) do
+         #  true <- was_created_recently?(details.updated_at),
+         :ok <- broadcast_to_subscribers(details) do
       Logger.debug("Notification processed and broadcast successfully")
     else
       error ->
@@ -28,14 +28,14 @@ defmodule SwapListener.Bot.NotificationService do
     end
   end
 
-  defp was_created_recently?(created_at) do
-    case DateTime.from_iso8601("#{created_at}Z") do
-      {:ok, dt, _} ->
-        now = DateTime.utc_now()
-        diff = DateTime.diff(now, dt, :second)
-        diff < 60
-    end
-  end
+  # defp was_created_recently?(created_at) do
+  #   case DateTime.from_iso8601("#{created_at}Z") do
+  #     {:ok, dt, _} ->
+  #       now = DateTime.utc_now()
+  #       diff = DateTime.diff(now, dt, :second)
+  #       diff < 60
+  #   end
+  # end
 
   defp send_message(subscription, details) do
     message = format_message(details, subscription)
@@ -120,12 +120,6 @@ defmodule SwapListener.Bot.NotificationService do
     e in ArgumentError ->
       Logger.error("Invalid data in notification payload: #{inspect(e)}")
       {:error, :invalid_data}
-  end
-
-  defp broadcast(details) do
-    Logger.debug("Broadcasting notification: #{inspect(details)}")
-
-    broadcast_to_subscribers(details)
   end
 
   defp broadcast_to_subscribers(details) do
