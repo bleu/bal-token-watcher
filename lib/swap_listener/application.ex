@@ -35,8 +35,7 @@ defmodule SwapListener.Application do
   require Logger
 
   def start(_type, _args) do
-    # children = default_children() ++ poller_children()
-    children = default_children()
+    children = default_children() ++ poller_children()
 
     opts = [strategy: :one_for_one, name: SwapListener.Supervisor]
 
@@ -57,8 +56,8 @@ defmodule SwapListener.Application do
       {Notifications.Setup, []},
       ChatSubscriptionManager,
       {RateLimiter, [name: :telegram_rate_limiter]},
-      {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]}
-      # {DexscreenerUrlManager, []}
+      {Telegram.Webhook, config: webhook_config(), bots: [telegram_bot_config()]},
+      {DexscreenerUrlManager, []}
     ]
   end
 

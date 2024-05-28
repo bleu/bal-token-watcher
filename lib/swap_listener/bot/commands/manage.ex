@@ -32,13 +32,13 @@ defmodule SwapListener.Bot.Commands.Manage do
 
     case setting do
       :min_buy_amount ->
-        Utils.set_setting(:min_buy_amount, text, state[:current_subscription], chat_id, state)
+        Utils.set_setting(:min_buy_amount, Decimal.new(text), state[:current_subscription], chat_id, state)
 
       :trade_size_emoji ->
         Utils.set_setting(:trade_size_emoji, text, state[:current_subscription], chat_id, state)
 
       :trade_size_step ->
-        Utils.set_setting(:trade_size_step, text, state[:current_subscription], chat_id, state)
+        Utils.set_setting(:trade_size_step, Decimal.new(text), state[:current_subscription], chat_id, state)
 
       :alert_image_url ->
         Utils.set_setting(:alert_image_url, text, state[:current_subscription], chat_id, state)
@@ -53,6 +53,14 @@ defmodule SwapListener.Bot.Commands.Manage do
         case ChatSubscriptionManager.add_link(state[:current_subscription], text) do
           :ok -> {state, %{chat_id: chat_id, text: "Link added."}}
           {:error, _} -> {state, %{chat_id: chat_id, text: "Failed to add link."}}
+        end
+
+      :reorder_links ->
+        indexes = String.split(text, ",", trim: true)
+
+        case ChatSubscriptionManager.reorder_links(state[:current_subscription], indexes) do
+          :ok -> {state, %{chat_id: chat_id, text: "Links have been reordered."}}
+          {:error, message} -> {state, %{chat_id: chat_id, text: message}}
         end
 
       _ ->
@@ -95,8 +103,8 @@ defmodule SwapListener.Bot.Commands.Manage do
       ["edit_link_action", action, link_type, subscription_id] ->
         Links.edit_link_action(action, link_type, subscription_id, chat_id, state)
 
-      ["edit_link_action", "add", subscription_id] ->
-        Links.edit_link_action("add", subscription_id, chat_id, state)
+      ["edit_link_action", action, subscription_id] ->
+        Links.edit_link_action(action, subscription_id, chat_id, state)
 
       ["update_min_buy_amount", subscription_id] ->
         update_min_buy_amount(subscription_id, chat_id, state)

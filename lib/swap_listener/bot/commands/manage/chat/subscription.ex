@@ -6,11 +6,15 @@ defmodule SwapListener.Bot.Commands.Manage.Chat.Subscription do
     state = Map.put(state, :current_subscription, subscription_id)
 
     buttons = [
-      [%{text: "Pause", callback_data: "pause_subscription:#{subscription_id}"}],
-      [%{text: "Restart", callback_data: "restart_subscription:#{subscription_id}"}],
-      [%{text: "Unsubscribe", callback_data: "unsubscribe_subscription:#{subscription_id}"}],
-      [%{text: "Change Settings", callback_data: "change_settings:#{subscription_id}"}],
-      [%{text: "Manage Links", callback_data: "manage_links:#{subscription_id}"}]
+      [
+        %{text: "Pause", callback_data: "pause_subscription:#{subscription_id}"},
+        %{text: "Restart", callback_data: "restart_subscription:#{subscription_id}"},
+        %{text: "Unsubscribe", callback_data: "unsubscribe_subscription:#{subscription_id}"}
+      ],
+      [
+        %{text: "Manage Links", callback_data: "manage_links:#{subscription_id}"},
+        %{text: "Change Settings", callback_data: "change_settings:#{subscription_id}"}
+      ]
     ]
 
     reply_markup = %{inline_keyboard: buttons}

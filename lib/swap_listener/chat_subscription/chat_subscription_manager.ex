@@ -4,7 +4,9 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
 
   import Ecto.Query
 
+  alias SwapListener.Bot.Commands.Utils
   alias SwapListener.ChatSubscription.ChatSubscription
+  alias SwapListener.Common.BlockchainConfig
   alias SwapListener.Infra.Repo
 
   require Integer
@@ -47,10 +49,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           trade_size_emoji: c.trade_size_emoji,
           min_buy_amount: c.min_buy_amount,
           alert_image_url: c.alert_image_url,
-          website_url: c.website_url,
-          twitter_handle: c.twitter_handle,
-          discord_link: c.discord_link,
-          telegram_link: c.telegram_link,
+          links: c.links,
           paused: c.paused,
           language: c.language
         }
@@ -65,7 +64,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
     query =
       from(c in ChatSubscription,
         where: c.chat_id == ^chat_id and is_nil(c.archived_at),
-        order_by: [asc: c.chain_id, asc: c.token_address],
+        order_by: [desc: c.inserted_at],
         select: %{
           id: c.id,
           chat_id: c.chat_id,
@@ -75,10 +74,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           trade_size_emoji: c.trade_size_emoji,
           min_buy_amount: c.min_buy_amount,
           alert_image_url: c.alert_image_url,
-          website_url: c.website_url,
-          twitter_handle: c.twitter_handle,
-          discord_link: c.discord_link,
-          telegram_link: c.telegram_link,
+          links: c.links,
           paused: c.paused,
           language: c.language
         }
@@ -100,10 +96,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
           trade_size_emoji: c.trade_size_emoji,
           min_buy_amount: c.min_buy_amount,
           alert_image_url: c.alert_image_url,
-          website_url: c.website_url,
-          twitter_handle: c.twitter_handle,
-          discord_link: c.discord_link,
-          telegram_link: c.telegram_link,
+          links: c.links,
           paused: c.paused,
           language: c.language
         }
@@ -132,27 +125,23 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
             chat_title: state[:chat_title],
             token_address: token_address,
             chain_id: chain_id,
-            trade_size_step: state[:trade_size_step] || 0.1,
-            trade_size_emoji: state[:trade_size_emoji] || "💰",
-            min_buy_amount: state[:min_buy_amount] || 0.1,
+            min_buy_amount: Decimal.new(state[:min_buy_amount] || "0.1"),
             alert_image_url: state[:alert_image_url] || nil,
-            website_url: state[:website_url] || nil,
-            twitter_handle: state[:twitter_handle] || nil,
-            discord_link: state[:discord_link] || nil,
-            telegram_link: state[:telegram_link] || nil,
             paused: false,
             creator_id: user_id
           })
+
+        token_label = Utils.build_token_label(token_address, chain_id)
 
         case Repo.insert(changeset) do
           {:ok, subscription} ->
             handle_db_response(
               {:ok, nil},
               chat_id,
-              "You have successfully subscribed to alerts for token #{token_address} on chain #{chain_id}."
+              "You have successfully subscribed to alerts for token #{token_label} on chain #{BlockchainConfig.get_chain_label(chain_id)}."
             )
 
-            subscription
+            {:ok, subscription}
 
           {:error, changeset} ->
             Logger.info("Failed to insert subscription for chat_id: #{chat_id}")
@@ -164,7 +153,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
         handle_db_response(
           {:error, nil},
           chat_id,
-          "You are already subscribed to alerts for token #{token_address} on chain #{chain_id}."
+          "You are already subscribed to alerts for token #{token_address} on chain #{BlockchainConfig.get_chain_label(chain_id)}."
         )
     end
   end
@@ -226,7 +215,7 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   end
 
   def adjust_min_buy_amount(subscription, new_min_buy_amount) do
-    changeset = ChatSubscription.changeset(subscription, %{min_buy_amount: new_min_buy_amount})
+    changeset = ChatSubscription.changeset(subscription, %{min_buy_amount: Decimal.new(new_min_buy_amount)})
 
     case Repo.update(changeset) do
       {:ok, _subscription} -> :ok
@@ -238,41 +227,51 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
   defp enforce_to_integer(value) when is_binary(value), do: String.to_integer(value)
 
   def update_subscription_setting(subscription_id, setting_key, setting_value) do
-    subscription = Repo.get(ChatSubscription, subscription_id)
+    subscription_id = enforce_to_integer(subscription_id)
 
-    changeset = ChatSubscription.changeset(subscription, %{setting_key => setting_value})
+    case Repo.get(ChatSubscription, subscription_id) do
+      nil ->
+        Logger.error("Subscription not found for ID #{subscription_id}")
+        {:error, "Subscription not found"}
 
-    case Repo.update(changeset) do
-      {:ok, _subscription} ->
-        :ok
+      subscription ->
+        changeset = ChatSubscription.changeset(subscription, %{setting_key => setting_value})
 
-      {:error, changeset} ->
-        Logger.error(
-          "Failed to update setting #{setting_key} for subscription #{subscription_id}: #{inspect(changeset.errors)}"
-        )
+        case Repo.update(changeset) do
+          {:ok, _subscription} ->
+            :ok
 
-        {:error, changeset.errors}
+          {:error, changeset} ->
+            Logger.error(
+              "Failed to update setting #{setting_key} for subscription #{subscription_id}: #{inspect(changeset.errors)}"
+            )
+
+            {:error, changeset.errors}
+        end
     end
   end
 
-  def remove_link(subscription_id, link_label) do
+  def remove_link(subscription_id, index) do
     subscription = Repo.get(ChatSubscription, subscription_id)
 
     links = subscription.links
-    index = Enum.find_index(links, fn link -> link.label == link_label end)
 
-    updated_links =
-      if index do
-        List.delete_at(links, index)
-      else
-        links
-      end
+    link = Enum.at(links, index)
 
-    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+    case link do
+      %{default: true} ->
+        Logger.error("Failed to remove default link: #{index}")
+        {:error, "Can't remove default link."}
 
-    case Repo.update(changeset) do
-      {:ok, _subscription} -> :ok
-      {:error, changeset} -> Logger.error("Failed to remove link: #{inspect(changeset.errors)}")
+      _ ->
+        updated_links = List.delete_at(links, index)
+
+        changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+        case Repo.update(changeset) do
+          {:ok, _subscription} -> :ok
+          {:error, changeset} -> Logger.error("Failed to remove link: #{inspect(changeset.errors)}")
+        end
     end
   end
 
@@ -294,23 +293,18 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
     end
   end
 
-  def toggle_link_status(subscription_id, link_id) do
+  def toggle_link_status(subscription_id, index) do
     subscription = Repo.get(ChatSubscription, subscription_id)
 
     links = subscription.links
-    index = Enum.find_index(links, fn link -> link["id"] == link_id end)
 
     updated_links =
-      if index do
-        List.update_at(links, index, fn link ->
-          case link["status"] do
-            "enabled" -> %{link | "status" => "disabled"}
-            "disabled" -> %{link | "status" => "enabled"}
-          end
-        end)
-      else
-        links
-      end
+      List.update_at(links, index, fn link ->
+        case link["status"] do
+          "enabled" -> %{link | "status" => "disabled"}
+          "disabled" -> %{link | "status" => "enabled"}
+        end
+      end)
 
     changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
 
@@ -366,6 +360,30 @@ defmodule SwapListener.ChatSubscription.ChatSubscriptionManager do
     case Repo.update(changeset) do
       {:ok, _subscription} -> :ok
       {:error, changeset} -> Logger.error("Failed to update link label: #{inspect(changeset.errors)}")
+    end
+  end
+
+  def reorder_links(subscription_id, link_indexes) do
+    subscription = Repo.get(ChatSubscription, subscription_id)
+
+    links = subscription.links
+
+    updated_links =
+      Enum.map(link_indexes, fn index ->
+        # ensure index is an integer
+        Enum.at(
+          links,
+          index
+          |> Integer.parse()
+          |> elem(0)
+        )
+      end)
+
+    changeset = ChatSubscription.changeset(subscription, %{links: updated_links})
+
+    case Repo.update(changeset) do
+      {:ok, _subscription} -> :ok
+      {:error, changeset} -> Logger.error("Failed to reorder links: #{inspect(changeset.errors)}")
     end
   end
 end

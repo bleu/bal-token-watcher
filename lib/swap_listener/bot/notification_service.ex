@@ -244,17 +244,28 @@ defmodule SwapListener.Bot.NotificationService do
     "#{emoji_string}"
   end
 
+  defp get_link_url(link_id, subscription, details) do
+    case link_id do
+      "tx" -> details.tx_link
+      "buy" -> details.buy_link
+      "deposit" -> details.deposit_link
+      "chart" -> details.dexscreener_url
+      _ -> subscription.links |> Enum.find(fn link -> link["label"] == link_id end) |> Map.get("url")
+    end
+  end
+
+  defp get_enabled_links(links) do
+    Enum.filter(links, fn link -> link["status"] == "enabled" end)
+  end
+
   defp format_links(subscription, details) do
-    [
-      format_link(gettext("TX"), details.tx_link),
-      format_link(gettext("Buy"), details.buy_link),
-      format_link(gettext("Deposit"), details.deposit_link),
-      format_link(gettext("Chart"), details.dexscreener_url),
-      format_link(gettext("Website"), subscription.website_url),
-      format_link(gettext("Twitter"), subscription.twitter_handle),
-      format_link(gettext("Discord"), subscription.discord_link),
-      format_link(gettext("Telegram"), subscription.telegram_link)
-    ]
+    Logger.debug("Formatting links for subscription: #{inspect(subscription)}")
+
+    subscription.links
+    |> get_enabled_links()
+    |> Enum.map(fn link ->
+      format_link(link["label"], get_link_url(link["id"], subscription, details))
+    end)
     |> Enum.filter(&(&1 != ""))
     |> Enum.join(" | ")
   end

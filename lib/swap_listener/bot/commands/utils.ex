@@ -55,18 +55,58 @@ defmodule SwapListener.Bot.Commands.Utils do
   end
 
   def format_subscription_settings(subscription) do
-    """
-    *Token Address:* #{subscription.token_address}
-    *Chain ID:* #{subscription.chain_id}
-    *Trade Size Step:* #{subscription.trade_size_step}
-    *Trade Size Emoji:* #{subscription.trade_size_emoji}
-    *Min Buy Amount:* #{subscription.min_buy_amount}
-    *Alert Image URL:* #{subscription.alert_image_url}
-    *Website URL:* #{subscription.website_url}
-    *Twitter Handle:* #{subscription.twitter_handle}
-    *Discord Link:* #{subscription.discord_link}
-    *Telegram Link:* #{subscription.telegram_link}
-    """
+    rows = [
+      %{"Chat Title" => subscription.chat_title},
+      %{"Token Address" => subscription.token_address},
+      %{"Chain ID" => BlockchainConfig.get_chain_label(subscription.chain_id)},
+      %{"Minimum Buy Amount" => subscription.min_buy_amount},
+      %{"Trade Size Emoji" => subscription.trade_size_emoji},
+      %{"Trade Size Step" => subscription.trade_size_step},
+      %{"Alert Image URL" => subscription.alert_image_url},
+      %{"Paused" => subscription.paused},
+      %{"Language" => subscription.language},
+      %{"Links" => subscription.links}
+    ]
+
+    rows
+    |> Enum.map_join("\n", fn row ->
+      label = row |> Map.keys() |> Enum.at(0)
+      value = row |> Map.values() |> Enum.at(0)
+
+      case value do
+        links when is_list(links) ->
+          """
+          - *#{label}:*
+
+          #{links |> Enum.map_join("\n", &format_link/1) |> String.trim_trailing()}
+          """
+
+        _ ->
+          "- *#{label}:* #{value}"
+      end
+    end)
+    |> String.trim_trailing()
+  end
+
+  defp format_link(link) do
+    case link do
+      %{
+        "label" => label,
+        "default" => default,
+        "status" => status
+      } ->
+        "- *#{label}* (#{if default, do: "Default", else: "Not Default"}) (#{status})"
+
+      %{
+        "label" => label,
+        "status" => status,
+        "url" => url
+      } ->
+        """
+        - *#{label}* (#{status})
+            URL: #{url}
+        """
+    end
   end
 
   defp calculate_column_widths(headers, subscriptions) do
@@ -77,14 +117,21 @@ defmodule SwapListener.Bot.Commands.Utils do
         max(subscription.chat_id |> Integer.to_string() |> String.length(), Enum.at(acc, 0)),
         max(String.length(BlockchainConfig.get_chain_label(subscription.chain_id)), Enum.at(acc, 1)),
         max(
-          String.length(
-            "#{truncate_address(subscription.token_address)} (#{get_token_sym(subscription.token_address, subscription.chain_id)})"
-          ),
+          String.length(build_token_label(subscription.token_address, subscription.chain_id)),
           Enum.at(acc, 2)
         ),
         max(String.length(if subscription.paused, do: "Paused", else: "Active"), Enum.at(acc, 3))
       ]
     end)
+  end
+
+  def build_token_label(token_address, chain_id) do
+    symbol = get_token_sym(token_address, chain_id)
+
+    case symbol do
+      "" -> "#{truncate_address(token_address)}"
+      _ -> "#{truncate_address(token_address)} (#{symbol})"
+    end
   end
 
   defp truncate_address(address) do
@@ -115,15 +162,11 @@ defmodule SwapListener.Bot.Commands.Utils do
     values = [
       Integer.to_string(chat_id),
       BlockchainConfig.get_chain_label(chain_id),
-      "#{truncate_address(token_address)} (#{get_token_sym(token_address, chain_id)})",
+      build_token_label(token_address, chain_id),
       status
     ]
 
     format_row(values, widths)
-  end
-
-  def token_address_with_sym(token_address, chain_id) do
-    "#{truncate_address(token_address)} (#{get_token_sym(token_address, chain_id)})"
   end
 
   defp pad_right(string, length) do
@@ -145,7 +188,7 @@ defmodule SwapListener.Bot.Commands.Utils do
       )
 
     case Repo.one(query) do
-      nil -> "Unknown"
+      nil -> ""
       %{token_in: ^token_address, token_in_sym: token_symbol} -> token_symbol
       %{token_out: ^token_address, token_out_sym: token_symbol} -> token_symbol
       _ -> "Unknown"

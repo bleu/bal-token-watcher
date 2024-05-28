@@ -9,9 +9,9 @@ defmodule SwapListener.ChatSubscription.ChatSubscription do
     field :chat_title, :string
     field :token_address, :string
     field :chain_id, :integer
-    field :min_buy_amount, :decimal
-    field :trade_size_emoji, :string
-    field :trade_size_step, :decimal
+    field :min_buy_amount, :decimal, default: 0.1
+    field :trade_size_emoji, :string, default: "🚀"
+    field :trade_size_step, :decimal, default: 1.0
     field :alert_image_url, :string
     field :website_url, :string
     field :twitter_handle, :string
@@ -21,28 +21,28 @@ defmodule SwapListener.ChatSubscription.ChatSubscription do
     field :links, {:array, :map},
       default: [
         %{
-          id: "tx",
-          label: "TX",
-          default: true,
-          status: :enabled
+          "id" => "tx",
+          "label" => "TX",
+          "default" => true,
+          "status" => "enabled"
         },
         %{
-          id: "buy",
-          label: "Buy",
-          default: true,
-          status: :enabled
+          "id" => "buy",
+          "label" => "Buy",
+          "default" => true,
+          "status" => "enabled"
         },
         %{
-          id: "deposit",
-          label: "Deposit",
-          default: true,
-          status: :enabled
+          "id" => "deposit",
+          "label" => "Deposit",
+          "default" => true,
+          "status" => "enabled"
         },
         %{
-          id: "chart",
-          label: "Chart",
-          default: true,
-          status: :enabled
+          "id" => "chart",
+          "label" => "Chart",
+          "default" => true,
+          "status" => "enabled"
         }
       ]
 

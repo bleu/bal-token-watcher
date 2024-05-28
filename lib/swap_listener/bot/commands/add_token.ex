@@ -146,14 +146,7 @@ defmodule SwapListener.Bot.Commands.AddToken do
     if valid_token_address?(token_address) do
       new_state = Map.put(state, :token_address, token_address)
 
-      token_sym = Utils.get_token_sym(token_address, state[:chain_id])
-
-      confirmation_message =
-        "You have selected the token: #{token_sym} (#{token_address}). Token subscription has been added."
-
-      reply = %{chat_id: chat_id, text: confirmation_message}
       finalize_token_addition(chat_id, new_state)
-      {new_state, reply}
     else
       reply = %{chat_id: chat_id, text: "Invalid token address. Please try again."}
       {state, reply}
@@ -161,14 +154,26 @@ defmodule SwapListener.Bot.Commands.AddToken do
   end
 
   defp finalize_token_addition(chat_id, state) do
-    subscription = ChatSubscriptionManager.subscribe(chat_id, state[:creator_id], state)
+    case ChatSubscriptionManager.subscribe(chat_id, state[:creator_id], state) do
+      :ok ->
+        Logger.info("Token subscription added successfully: #{inspect(state)}")
 
-    confirmation_message = """
-    Token added successfully with the following details:
-    #{Utils.format_subscription_settings(subscription)}
-    """
+      {:error, reason} ->
+        Logger.error("Failed to add token subscription: #{inspect(reason)}")
 
-    @telegram_client.send_message(chat_id, confirmation_message)
+      {:ok, subscription} ->
+        confirmation_message = """
+        Token added successfully with the following details:
+        #{Utils.format_subscription_settings(subscription)}
+        """
+
+        {state, %{chat_id: chat_id, text: confirmation_message}}
+
+      {:error, _reason} ->
+        error_message = "Failed to add token subscription. Please try again."
+
+        {state, %{chat_id: chat_id, text: error_message}}
+    end
   end
 
   defp valid_token_address?(address) do

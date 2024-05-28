@@ -1,5 +1,6 @@
 defmodule SwapListener.Bot.Commands.ExampleMessage do
   @moduledoc false
+  alias SwapListener.Bot.Commands.Utils
   alias SwapListener.Bot.NotificationService
 
   @telegram_client Application.compile_env(
@@ -12,8 +13,8 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
     language = List.first(args) || "en"
 
     example_notification = %{
-      token_in: "0xExampleTokenIn",
-      token_out: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      token_in: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      token_out: "0xExampleTokenOut",
       token_in_sym: "ETH",
       token_out_sym: "EXMPL",
       token_amount_in: "1.0",
@@ -22,26 +23,53 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
       chain_id: 1,
       tx: "0xExampleTransactionHash",
       tx_link: "https://example.com/tx/0xExampleTransactionHash",
-      buy_link: "https://example.com/buy/0xExampleTokenIn/0xExampleTokenOut",
-      dexscreener_url: "https://example.com/dex/0xExampleTokenIn/0xExampleTokenOut",
+      buy_link: "https://example.com/buy/0xExampleTokenOut/0xExampleTokenOut",
+      dexscreener_url: "https://example.com/dex/0xExampleTokenOut/0xExampleTokenOut",
       deposit_link: "https://example.com/deposit/0xExamplePool"
     }
 
     subscription = %{
       chat_id: chat_id,
       chat_title: "Example Chat",
-      token_address: "0xExampleTokenIn",
+      token_address: "0xExampleTokenOut",
       chain_id: 1,
       min_buy_amount: Decimal.new("1.0"),
       trade_size_emoji: "🚀",
       trade_size_step: Decimal.new("1.0"),
-      alert_image_url: "https://example.com/image.gif",
+      alert_image_url:
+        "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnlpMTU2b3B5Nmlhajl2Y2Z3dnQwdG5zZzZpNHpzamlsa29taGxrZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3orieS4jfHJaKwkeli/giphy.gif",
       website_url: "https://example.com",
       twitter_handle: "https://example.com",
       discord_link: "https://discord.gg/example",
       telegram_link: "https://t.me/example",
       paused: false,
       archived_at: nil,
+      links: [
+        %{
+          "id" => "tx",
+          "label" => "TX",
+          "default" => true,
+          "status" => "enabled"
+        },
+        %{
+          "id" => "buy",
+          "label" => "Buy",
+          "default" => true,
+          "status" => "enabled"
+        },
+        %{
+          "id" => "deposit",
+          "label" => "Deposit",
+          "default" => true,
+          "status" => "enabled"
+        },
+        %{
+          "id" => "chart",
+          "label" => "Chart",
+          "default" => true,
+          "status" => "enabled"
+        }
+      ],
       creator_id: user_id,
       language: language
     }
@@ -58,19 +86,7 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
   defp format_subscription_settings(subscription) do
     """
     *Example Subscription Settings:*
-    - *Chat Title:* #{subscription.chat_title}
-    - *Token Address:* #{subscription.token_address}
-    - *Chain ID:* #{subscription.chain_id}
-    - *Minimum Buy Amount:* #{Decimal.to_string(subscription.min_buy_amount)}
-    - *Trade Size Emoji:* #{subscription.trade_size_emoji}
-    - *Trade Size Step:* #{Decimal.to_string(subscription.trade_size_step)}
-    - *Alert Image URL:* #{subscription.alert_image_url}
-    - *Website URL:* #{subscription.website_url}
-    - *Twitter Handle:* #{subscription.twitter_handle}
-    - *Discord Link:* #{subscription.discord_link}
-    - *Telegram Link:* #{subscription.telegram_link}
-    - *Paused:* #{subscription.paused}
-    - *Language:* #{subscription.language}
+    #{Utils.format_subscription_settings(subscription)}
     """
   end
 end

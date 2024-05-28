@@ -5,7 +5,7 @@ defmodule SwapListener.Telegram.RateLimiter do
   require Logger
 
   @default_max_messages_per_second 30
-  @default_interval 1000
+  @default_interval 100
   @default_throttle_threshold 25
   @reset_interval 10_000
 
