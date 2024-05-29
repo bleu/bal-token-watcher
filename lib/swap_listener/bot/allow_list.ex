@@ -3,7 +3,8 @@ defmodule SwapListener.Bot.AllowList do
 
   @allowed_users ["rpunktj", "burns_unit", "tritium_vlk"]
 
-  def allowed?(username) do
-    username in @allowed_users
+  def allowed?(_username) do
+    true
+    # username in @allowed_users
   end
 end
