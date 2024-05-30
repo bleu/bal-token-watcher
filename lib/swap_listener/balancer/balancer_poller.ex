@@ -42,7 +42,7 @@ defmodule SwapListener.Balancer.BalancerPoller do
     query = """
     query ($latestTimestamp: Int!) {
       swaps(first: #{@batch_size}, orderBy: timestamp, orderDirection: desc, where: {timestamp_gt: $latestTimestamp}) {
-        id caller tokenIn tokenInSym tokenOut tokenOutSym tokenAmountIn tokenAmountOut valueUSD poolId { id } userAddress { id } timestamp block tx
+        id caller tokenIn tokenInSym tokenOut tokenOutSym tokenAmountIn tokenAmountOut valueUSD poolId { id } userAddress { id } timestamp tx
       }
     }
     """
