@@ -33,9 +33,9 @@ defmodule SwapListener.Bot.Commands.ExampleMessage do
       chat_title: "Example Chat",
       token_address: "0xExampleTokenOut",
       chain_id: 1,
-      min_buy_amount: Decimal.new("1.0"),
+      min_buy_amount: Decimal.new("10.0"),
       trade_size_emoji: "🚀",
-      trade_size_step: Decimal.new("1.0"),
+      trade_size_step: Decimal.new("10.0"),
       alert_image_url:
         "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnlpMTU2b3B5Nmlhajl2Y2Z3dnQwdG5zZzZpNHpzamlsa29taGxrZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3orieS4jfHJaKwkeli/giphy.gif",
       website_url: "https://example.com",

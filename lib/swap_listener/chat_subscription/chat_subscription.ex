@@ -9,9 +9,9 @@ defmodule SwapListener.ChatSubscription.ChatSubscription do
     field :chat_title, :string
     field :token_address, :string
     field :chain_id, :integer
-    field :min_buy_amount, :decimal, default: 1.0
+    field :min_buy_amount, :decimal, default: 10.0
     field :trade_size_emoji, :string, default: "🚀"
-    field :trade_size_step, :decimal, default: 1.0
+    field :trade_size_step, :decimal, default: 10.0
     field :alert_image_url, :string
     field :website_url, :string
     field :twitter_handle, :string
