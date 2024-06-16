@@ -2,7 +2,6 @@ defmodule SwapListener.Telegram.TelegramBot do
   @moduledoc false
   use Telegram.ChatBot
 
-  alias SwapListener.Bot.ActionHandler
   alias SwapListener.Bot.AllowList
   alias SwapListener.Bot.CommandDispatcher
   alias SwapListener.Bot.Commands.Manage
