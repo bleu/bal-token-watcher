@@ -8,20 +8,20 @@ defmodule SwapListener.Common.BlockchainConfig do
     10 => "Optimism",
     100 => "Gnosis",
     43_114 => "Avalanche",
-    8453 => "Base",
-    250 => "Fantom"
+    8453 => "Base"
+    # 250 => "Fantom"
   }
 
   @subgraph_urls %{
-    1 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2",
-    137 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2",
+    1 => "https://api.studio.thegraph.com/query/75376/balancer-v2/version/latest",
+    137 => "https://api.studio.thegraph.com/query/75376/balancer-polygon-v2/version/latest",
     1101 => "https://api.studio.thegraph.com/query/24660/balancer-polygon-zk-v2/version/latest",
-    42_161 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-arbitrum-v2",
-    10 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-optimism-v2",
-    100 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-gnosis-chain-v2",
-    43_114 => "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-avalanche-v2",
-    8453 => "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest",
-    250 => "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx"
+    42_161 => "https://api.studio.thegraph.com/query/75376/balancer-arbitrum-v2/version/latest",
+    10 => "https://api.studio.thegraph.com/query/75376/balancer-optimism-v2/version/latest",
+    100 => "https://api.studio.thegraph.com/query/75376/balancer-gnosis-chain-v2/version/latest",
+    43_114 => "https://api.studio.thegraph.com/query/75376/balancer-avalanche-v2/version/latest",
+    8453 => "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest"
+    # 250 => "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx"
   }
 
   @chain_scanner_map %{
@@ -32,8 +32,8 @@ defmodule SwapListener.Common.BlockchainConfig do
     10 => "https://optimistic.etherscan.io",
     100 => "https://gnosisscan.io",
     43_114 => "https://snowtrace.io",
-    8453 => "https://basescan.org",
-    250 => "https://ftmscan.com"
+    8453 => "https://basescan.org"
+    # 250 => "https://ftmscan.com"
   }
 
   @balancer_pool_map %{
@@ -44,8 +44,8 @@ defmodule SwapListener.Common.BlockchainConfig do
     10 => "https://app.balancer.fi/#/optimism/pool",
     100 => "https://app.balancer.fi/#/gnosis-chain/pool",
     43_114 => "https://app.balancer.fi/#/avalanche/pool",
-    8453 => "https://app.balancer.fi/#/base/pool",
-    250 => "https://beets.fi/pool"
+    8453 => "https://app.balancer.fi/#/base/pool"
+    # 250 => "https://beets.fi/pool"
   }
 
   def subgraph_urls do
