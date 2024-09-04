@@ -21,7 +21,8 @@ defmodule SwapListener.Common.BlockchainConfig do
     100 => "https://api.studio.thegraph.com/query/75376/balancer-gnosis-chain-v2/version/latest",
     43_114 => "https://api.studio.thegraph.com/query/75376/balancer-avalanche-v2/version/latest",
     8453 => "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest",
-    250 => "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx"
+    250 =>
+      "https://gateway-arbitrum.network.thegraph.com/api/5d654c865634ba4c26725e7e9f5d5874/subgraphs/id/CcWtE5UMUaoKTRu8LWjzambKJtgUVjcN31pD5BdffVzK"
   }
 
   @chain_scanner_map %{
